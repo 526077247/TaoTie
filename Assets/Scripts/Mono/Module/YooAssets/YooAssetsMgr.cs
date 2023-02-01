@@ -86,13 +86,13 @@ namespace YooAsset
                 string assetBundleName = "assets/assetspackage.bundle";
                 var ab = SyncLoadAssetBundle(assetBundleName);
                 IsDllBuildIn = true;
-                string jstr = ((TextAsset) ab.LoadAsset("Assets/AssetsPackage/config.bytes", typeof (TextAsset))).text;
+                string jstr = ((TextAsset) ab.LoadAsset("Assets/AssetsPackage/config.bytes", TypeInfo<TextAsset>.Type)).text;
                 Config = JsonHelper.FromJson<BuildInConfig>(jstr);
                 ab.Unload(true);
                 if (!IsAssetBundleInPackage(assetBundleName))
                 {
                     ab = SyncLoadBuildInAssetBundle(assetBundleName);
-                    jstr = ((TextAsset) ab.LoadAsset("Assets/AssetsPackage/config.bytes", typeof (TextAsset))).text;
+                    jstr = ((TextAsset) ab.LoadAsset("Assets/AssetsPackage/config.bytes", TypeInfo<TextAsset>.Type)).text;
                     var oldConfig = JsonHelper.FromJson<BuildInConfig>(jstr);
                     this.IsDllBuildIn = Config.Dllver == oldConfig.Dllver;
                     Debug.Log($"Config.Dllver ={Config.Dllver } oldConfig.Dllver={oldConfig.Dllver}");
