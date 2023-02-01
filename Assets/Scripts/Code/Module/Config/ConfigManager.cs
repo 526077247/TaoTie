@@ -30,7 +30,7 @@ namespace TaoTie
         
         public T LoadOneConfig<T>(string name = "", bool cache = false) where T: ProtoObject
 		{
-			Type configType = typeof(T);
+			Type configType = TypeInfo<T>.Type;
 			if (string.IsNullOrEmpty(name))
 				name = configType.FullName;
 			byte[] oneConfigBytes = this.ConfigLoader.GetOneConfigBytes(name);
@@ -53,7 +53,7 @@ namespace TaoTie
 		public void Load()
 		{
 			this.AllConfig.Clear();
-			List<Type> types = AttributeManager.Instance.GetTypes(typeof(ConfigAttribute));
+			List<Type> types = AttributeManager.Instance.GetTypes(TypeInfo<ConfigAttribute>.Type);
 
 			Dictionary<string, byte[]> configBytes = new Dictionary<string, byte[]>();
 			this.ConfigLoader.GetAllConfigBytes(configBytes);
@@ -74,7 +74,7 @@ namespace TaoTie
 		public async ETTask LoadAsync()
 		{
 			this.AllConfig.Clear();
-			List<Type> types = AttributeManager.Instance.GetTypes(typeof(ConfigAttribute));
+			List<Type> types = AttributeManager.Instance.GetTypes(TypeInfo<ConfigAttribute>.Type);
 
 			Dictionary<string, byte[]> configBytes = new Dictionary<string, byte[]>();
 			this.ConfigLoader.GetAllConfigBytes(configBytes);
