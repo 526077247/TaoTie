@@ -29,6 +29,9 @@ namespace TaoTie
 		public void Start()
 		{
 			AssetBundle ab = null;
+#if !UNITY_EDITOR
+			this.CodeMode = CodeMode.LoadDll;
+#endif
 			switch (this.CodeMode)
 			{
 				case CodeMode.BuildIn:

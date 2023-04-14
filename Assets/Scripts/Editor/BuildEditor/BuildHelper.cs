@@ -36,12 +36,12 @@ namespace TaoTie
             PlayerSettings.keystorePass = "123456";
         }
 
-        public static void Build(PlatformType type, BuildOptions buildOptions, bool isBuildExe,bool clearFolder)
+        public static void Build(PlatformType type, BuildOptions buildOptions, bool isBuildExe,bool clearFolder,bool buildResourceAll)
         {
             if (buildmap[type] == EditorUserBuildSettings.activeBuildTarget)
             {
                 //pack
-                BuildHandle(type, buildOptions, isBuildExe,clearFolder);
+                BuildHandle(type, buildOptions, isBuildExe,clearFolder,buildResourceAll);
             }
             else
             {
@@ -50,7 +50,7 @@ namespace TaoTie
                     if (EditorUserBuildSettings.activeBuildTarget == buildmap[type])
                     {
                         //pack
-                        BuildHandle(type, buildOptions, isBuildExe, clearFolder);
+                        BuildHandle(type, buildOptions, isBuildExe, clearFolder,buildResourceAll);
                     }
                 };
                 if(buildGroupmap.TryGetValue(type,out var group))
@@ -64,7 +64,7 @@ namespace TaoTie
                
             }
         }
-        private static void BuildInternal(BuildTarget buildTarget,bool isBuildExe)
+        private static void BuildInternal(BuildTarget buildTarget,bool isBuildExe,bool isBuildAll)
         {
             string jstr = File.ReadAllText("Assets/AssetsPackage/config.bytes");
             var obj = JsonHelper.FromJson<BuildInConfig>(jstr);
@@ -82,7 +82,15 @@ namespace TaoTie
             buildParameters.SBPParameters = new BuildParameters.SBPBuildParameters();
             buildParameters.BuildMode = isBuildExe?EBuildMode.ForceRebuild:EBuildMode.IncrementalBuild;
             buildParameters.BuildVersion = buildVersion;
-            buildParameters.BuildinTags = "buildin";
+            string tags = isBuildAll?null:"buildin";
+            if (!isBuildExe)
+            {
+                var PipelineOutputDirectory = AssetBundleBuilderHelper.MakePipelineOutputDirectory(defaultOutputRoot, buildTarget);
+                var oldPatchManifest = AssetBundleBuilderHelper.GetOldPatchManifest(PipelineOutputDirectory);
+                tags = oldPatchManifest.BuildinTags;
+            }
+            
+            buildParameters.BuildinTags = tags;
             buildParameters.VerifyBuildingResult = true;
             buildParameters.EnableAddressable = true;
             buildParameters.CopyBuildinTagFiles = true;
@@ -112,7 +120,7 @@ namespace TaoTie
             
 
         }
-        static void BuildHandle(PlatformType type, BuildOptions buildOptions, bool isBuildExe,bool clearFolder)
+        static void BuildHandle(PlatformType type, BuildOptions buildOptions, bool isBuildExe,bool clearFolder,bool buildResourceAll)
         {
             BuildTarget buildTarget = BuildTarget.StandaloneWindows;
             string programName = "TaoTie";
@@ -151,7 +159,7 @@ namespace TaoTie
             //处理图集资源
             // HandleAtlas();
             //打ab
-            BuildInternal(buildTarget, isBuildExe);
+            BuildInternal(buildTarget, isBuildExe,buildResourceAll);
 
             if (clearFolder && Directory.Exists(relativeDirPrefix))
             {

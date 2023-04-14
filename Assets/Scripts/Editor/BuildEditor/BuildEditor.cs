@@ -46,7 +46,7 @@ namespace TaoTie
 		private PlatformType platformType;
 		private bool clearFolder;
 		private bool isBuildExe;
-		// private bool isInject;
+		private bool buildResourceAll;
 		private bool isContainAB;
 		private BuildType buildType;
 		private BuildOptions buildOptions;
@@ -88,7 +88,7 @@ namespace TaoTie
 
 				clearFolder = buildSettings.clearFolder;
 				isBuildExe = buildSettings.isBuildExe;
-				// isInject = buildSettings.isInject;
+				buildResourceAll = this.buildSettings.buildResourceAll;
 				isContainAB = buildSettings.isContainAB;
 				buildType = buildSettings.buildType;
 				buildAssetBundleOptions = buildSettings.buildAssetBundleOptions;
@@ -125,6 +125,10 @@ namespace TaoTie
 			this.platformType = (PlatformType)EditorGUILayout.EnumPopup(platformType);
             this.clearFolder = EditorGUILayout.Toggle("清理资源文件夹: ", clearFolder);
             this.isBuildExe = EditorGUILayout.Toggle("是否打包EXE(整包): ", this.isBuildExe);
+            if (this.isBuildExe)
+            {
+	            this.buildResourceAll = EditorGUILayout.Toggle("是否打全量包: ", this.buildResourceAll);
+            }
             this.buildType = (BuildType)EditorGUILayout.EnumPopup("BuildType: ", this.buildType);
 			//EditorGUILayout.LabelField("BuildAssetBundleOptions(可多选):");
 			//this.buildAssetBundleOptions = (BuildAssetBundleOptions)EditorGUILayout.EnumFlagsField(this.buildAssetBundleOptions);
@@ -163,7 +167,7 @@ namespace TaoTie
                     }
                 }
 				
-				BuildHelper.Build(this.platformType, this.buildOptions, this.isBuildExe,this.clearFolder);
+				BuildHelper.Build(this.platformType, this.buildOptions, this.isBuildExe,this.clearFolder,this.buildResourceAll);
 			}
 
 			GUILayout.Space(5);
@@ -174,6 +178,7 @@ namespace TaoTie
 			buildSettings.clearFolder = clearFolder;
 			buildSettings.isBuildExe = isBuildExe;
 			buildSettings.isContainAB = isContainAB;
+			buildResourceAll = this.buildSettings.buildResourceAll;
 			buildSettings.buildType = buildType;
 			buildSettings.buildAssetBundleOptions = buildAssetBundleOptions;
 
