@@ -9,6 +9,7 @@ namespace TaoTie
         public bool isBuildExe = false;
         public bool isContainAB = false;
         public bool buildResourceAll;
+        public bool isPackAtlas;
         public BuildType buildType = BuildType.Release;
         public BuildAssetBundleOptions buildAssetBundleOptions = BuildAssetBundleOptions.None;
     }

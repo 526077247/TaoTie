@@ -11,23 +11,26 @@ namespace TaoTie
     {
         const string relativeDirPrefix = "Release";
 
-        public static readonly Dictionary<PlatformType, BuildTarget> buildmap = new Dictionary<PlatformType, BuildTarget>(PlatformTypeComparer.Instance)
-        {
-            { PlatformType.Android , BuildTarget.Android },
-            { PlatformType.Windows , BuildTarget.StandaloneWindows64 },
-            { PlatformType.IOS , BuildTarget.iOS },
-            { PlatformType.MacOS , BuildTarget.StandaloneOSX },
-            { PlatformType.Linux , BuildTarget.StandaloneLinux64 },
-        };
+        public static readonly Dictionary<PlatformType, BuildTarget> buildmap =
+            new Dictionary<PlatformType, BuildTarget>(PlatformTypeComparer.Instance)
+            {
+                {PlatformType.Android, BuildTarget.Android},
+                {PlatformType.Windows, BuildTarget.StandaloneWindows64},
+                {PlatformType.IOS, BuildTarget.iOS},
+                {PlatformType.MacOS, BuildTarget.StandaloneOSX},
+                {PlatformType.Linux, BuildTarget.StandaloneLinux64},
+            };
 
-        public static readonly Dictionary<PlatformType, BuildTargetGroup> buildGroupmap = new Dictionary<PlatformType, BuildTargetGroup>(PlatformTypeComparer.Instance)
-        {
-            { PlatformType.Android , BuildTargetGroup.Android },
-            { PlatformType.Windows , BuildTargetGroup.Standalone },
-            { PlatformType.IOS , BuildTargetGroup.iOS },
-            { PlatformType.MacOS , BuildTargetGroup.Standalone },
-            { PlatformType.Linux , BuildTargetGroup.Standalone },
-        };
+        public static readonly Dictionary<PlatformType, BuildTargetGroup> buildGroupmap =
+            new Dictionary<PlatformType, BuildTargetGroup>(PlatformTypeComparer.Instance)
+            {
+                {PlatformType.Android, BuildTargetGroup.Android},
+                {PlatformType.Windows, BuildTargetGroup.Standalone},
+                {PlatformType.IOS, BuildTargetGroup.iOS},
+                {PlatformType.MacOS, BuildTargetGroup.Standalone},
+                {PlatformType.Linux, BuildTargetGroup.Standalone},
+            };
+
         public static void KeystoreSetting()
         {
             PlayerSettings.Android.keystoreName = "TaoTie.keystore";
@@ -36,24 +39,25 @@ namespace TaoTie
             PlayerSettings.keystorePass = "123456";
         }
 
-        public static void Build(PlatformType type, BuildOptions buildOptions, bool isBuildExe,bool clearFolder,bool buildResourceAll)
+        public static void Build(PlatformType type, BuildOptions buildOptions, bool isBuildExe, bool clearFolder,
+            bool buildResourceAll, bool isPackAtlas)
         {
             if (buildmap[type] == EditorUserBuildSettings.activeBuildTarget)
             {
                 //pack
-                BuildHandle(type, buildOptions, isBuildExe,clearFolder,buildResourceAll);
+                BuildHandle(type, buildOptions, isBuildExe, clearFolder, buildResourceAll, isPackAtlas);
             }
             else
             {
-                EditorUserBuildSettings.activeBuildTargetChanged = delegate ()
+                EditorUserBuildSettings.activeBuildTargetChanged = delegate()
                 {
                     if (EditorUserBuildSettings.activeBuildTarget == buildmap[type])
                     {
                         //pack
-                        BuildHandle(type, buildOptions, isBuildExe, clearFolder,buildResourceAll);
+                        BuildHandle(type, buildOptions, isBuildExe, clearFolder, buildResourceAll, isPackAtlas);
                     }
                 };
-                if(buildGroupmap.TryGetValue(type,out var group))
+                if (buildGroupmap.TryGetValue(type, out var group))
                 {
                     EditorUserBuildSettings.SwitchActiveBuildTarget(group, buildmap[type]);
                 }
@@ -61,10 +65,11 @@ namespace TaoTie
                 {
                     EditorUserBuildSettings.SwitchActiveBuildTarget(buildmap[type]);
                 }
-               
+
             }
         }
-        private static void BuildInternal(BuildTarget buildTarget,bool isBuildExe,bool isBuildAll)
+
+        private static void BuildInternal(BuildTarget buildTarget, bool isBuildExe, bool isBuildAll)
         {
             string jstr = File.ReadAllText("Assets/AssetsPackage/config.bytes");
             var obj = JsonHelper.FromJson<BuildInConfig>(jstr);
@@ -80,47 +85,42 @@ namespace TaoTie
             buildParameters.BuildTarget = buildTarget;
             buildParameters.BuildPipeline = EBuildPipeline.ScriptableBuildPipeline;
             buildParameters.SBPParameters = new BuildParameters.SBPBuildParameters();
-            buildParameters.BuildMode = isBuildExe?EBuildMode.ForceRebuild:EBuildMode.IncrementalBuild;
+            buildParameters.BuildMode = isBuildExe ? EBuildMode.ForceRebuild : EBuildMode.IncrementalBuild;
             buildParameters.BuildVersion = buildVersion;
-            string tags = isBuildAll?null:"buildin";
+            string tags = isBuildAll ? null : "buildin";
             if (!isBuildExe)
             {
-                var PipelineOutputDirectory = AssetBundleBuilderHelper.MakePipelineOutputDirectory(defaultOutputRoot, buildTarget);
+                var PipelineOutputDirectory =
+                    AssetBundleBuilderHelper.MakePipelineOutputDirectory(defaultOutputRoot, buildTarget);
                 var oldPatchManifest = AssetBundleBuilderHelper.GetOldPatchManifest(PipelineOutputDirectory);
                 tags = oldPatchManifest.BuildinTags;
             }
-            
+
             buildParameters.BuildinTags = tags;
             buildParameters.VerifyBuildingResult = true;
             buildParameters.EnableAddressable = true;
             buildParameters.CopyBuildinTagFiles = true;
             buildParameters.EncryptionServices = new GameEncryption();
             buildParameters.CompressOption = ECompressOption.LZ4;
-            buildParameters.DisableWriteTypeTree = true;//禁止写入类型树结构（可以降低包体和内存并提高加载效率）
-            
+            buildParameters.DisableWriteTypeTree = true; //禁止写入类型树结构（可以降低包体和内存并提高加载效率）
+
             // 执行构建
             AssetBundleBuilder builder = new AssetBundleBuilder();
             var buildResult = builder.Run(buildParameters);
             if (buildResult.Success)
                 Debug.Log($"构建成功!");
         }
-        public static void HandleAtlas()
+
+        static void HandleAtlas()
         {
             //清除图集
             AltasHelper.ClearAllAtlas();
-
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
-
             //生成图集
             AltasHelper.GeneratingAtlas();
-
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
-            
-
         }
-        static void BuildHandle(PlatformType type, BuildOptions buildOptions, bool isBuildExe,bool clearFolder,bool buildResourceAll)
+
+        static void BuildHandle(PlatformType type, BuildOptions buildOptions, bool isBuildExe, bool clearFolder,
+            bool buildResourceAll, bool isPackAtlas)
         {
             BuildTarget buildTarget = BuildTarget.StandaloneWindows;
             string programName = "TaoTie";
@@ -152,14 +152,15 @@ namespace TaoTie
                     platform = "pc";
                     break;
             }
+
             //打程序集
             FileHelper.CleanDirectory(Define.HotfixDir);
             BuildAssemblieEditor.BuildCodeRelease();
-            
+
             //处理图集资源
-            // HandleAtlas();
+            if (isPackAtlas) HandleAtlas();
             //打ab
-            BuildInternal(buildTarget, isBuildExe,buildResourceAll);
+            BuildInternal(buildTarget, isBuildExe, buildResourceAll);
 
             if (clearFolder && Directory.Exists(relativeDirPrefix))
             {
@@ -175,28 +176,29 @@ namespace TaoTie
             {
 
                 AssetDatabase.Refresh();
-                string[] levels = {
+                string[] levels =
+                {
                     "Assets/AssetsPackage/Scenes/InitScene/Init.unity",
                 };
                 UnityEngine.Debug.Log("开始EXE打包");
                 BuildPipeline.BuildPlayer(levels, $"{relativeDirPrefix}/{exeName}", buildTarget, buildOptions);
                 UnityEngine.Debug.Log("完成exe打包");
-                
+
             }
-            
+
             string jstr = File.ReadAllText("Assets/AssetsPackage/config.bytes");
             var obj = JsonHelper.FromJson<BuildInConfig>(jstr);
-            
+
             string fold = $"{AssetBundleBuilderHelper.GetDefaultOutputRoot()}/{buildTarget}/{obj.Resver}";
-            
+
             string targetPath = Path.Combine(relativeDirPrefix, $"{obj.Channel}_{platform}");
             if (!Directory.Exists(targetPath)) Directory.CreateDirectory(targetPath);
             FileHelper.CleanDirectory(targetPath);
             FileHelper.CopyFiles(fold, targetPath);
-            
+
             UnityEngine.Debug.Log("完成cdn资源打包");
-            
+
         }
-        
+
     }
 }
