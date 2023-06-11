@@ -10,6 +10,6 @@
 
 # 衍生框架
 
-1. [GenshinGamePlay](https://github.com/526077247/GenshinGamePlay) 通过研究原神逆向工程 https://github.com/fengjixuchui/WorldReverse ，推导出的一套GamePlay框架，包括战斗、解密
+1. [GenshinGamePlay](https://github.com/526077247/GenshinGamePlay) 参考原神的GamePlay框架，包括战斗、解谜、怪物AI
 2. [FireCloud](https://github.com/526077247/FireCloud) 偏回合制战斗框架
 3. [TaoTie4ET](https://github.com/526077247/TaoTie4ET) 接入和ETPro服务端通讯的TaoTie
