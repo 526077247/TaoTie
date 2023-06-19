@@ -19,7 +19,7 @@ namespace TaoTie
 
         public byte[] GetOneConfigBytes(string configName)
         {
-            TextAsset v = YooAssetsMgr.Instance.LoadTextAsset(configName);
+            TextAsset v = YooAssetsMgr.Instance.LoadTextAsset("Config/"+configName+".bytes");
             return v.bytes;
         }
     }

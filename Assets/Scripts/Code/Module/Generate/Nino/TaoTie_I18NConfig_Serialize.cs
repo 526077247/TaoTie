@@ -17,8 +17,7 @@ namespace TaoTie
                 writer.Write(true);
                 writer.CompressAndWrite(value.Id);
                 writer.Write(value.Key);
-                writer.Write(value.Chinese);
-                writer.Write(value.English);
+                writer.Write(value.Value);
             }
 
             public override I18NConfig Deserialize(Nino.Serialization.Reader reader)
@@ -28,8 +27,7 @@ namespace TaoTie
                 I18NConfig value = new I18NConfig();
                 value.Id = reader.DecompressAndReadNumber<System.Int32>();
                 value.Key = reader.ReadString();
-                value.Chinese = reader.ReadString();
-                value.English = reader.ReadString();
+                value.Value = reader.ReadString();
                 return value;
             }
             #endregion
