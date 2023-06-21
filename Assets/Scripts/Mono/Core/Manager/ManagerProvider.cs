@@ -9,13 +9,13 @@ namespace TaoTie
         {
             AllManagers = new LinkedList<object>();
             ManagersMap = new MultiDictionary<Type,string, object>();
-            UpdateManagers = new LinkedList<IUpdateManager>();
+            UpdateManagers = new LinkedList<IUpdate>();
         }
         static ManagerProvider Instance { get; } = new ManagerProvider();
         
         MultiDictionary<Type,string, object> ManagersMap;
         private LinkedList<object> AllManagers;
-        private LinkedList<IUpdateManager> UpdateManagers;
+        private LinkedList<IUpdate> UpdateManagers;
         public static T GetManager<T>(string name = "") where T :class,IManagerDestroy
         {
             var type = TypeInfo<T>.Type;
@@ -31,7 +31,7 @@ namespace TaoTie
             if (!Instance.ManagersMap.TryGetValue(type, name, out var res))
             {
                 res = Activator.CreateInstance(type) as T;
-                if (res is IUpdateManager u)
+                if (res is IUpdate u)
                 {
                     Instance.UpdateManagers.AddLast(u);
                 }
@@ -48,7 +48,7 @@ namespace TaoTie
             if (!Instance.ManagersMap.TryGetValue(type, name, out var res))
             {
                 res = Activator.CreateInstance(type) as T;
-                if (res is IUpdateManager u)
+                if (res is IUpdate u)
                 {
                     Instance.UpdateManagers.AddLast(u);
                 }
@@ -64,7 +64,7 @@ namespace TaoTie
             if (!Instance.ManagersMap.TryGetValue(type, name, out var res))
             {
                 res = Activator.CreateInstance(type) as T;
-                if (res is IUpdateManager u)
+                if (res is IUpdate u)
                 {
                     Instance.UpdateManagers.AddLast(u);
                 }
@@ -80,7 +80,7 @@ namespace TaoTie
             if (!Instance.ManagersMap.TryGetValue(type, name, out var res))
             {
                 res = Activator.CreateInstance(type) as T;
-                if (res is IUpdateManager u)
+                if (res is IUpdate u)
                 {
                     Instance.UpdateManagers.AddLast(u);
                 }
@@ -96,7 +96,7 @@ namespace TaoTie
             var type = TypeInfo<T>.Type;
             if (Instance.ManagersMap.TryGetValue(type, name, out var res))
             {
-                if (res is IUpdateManager u)
+                if (res is IUpdate u)
                 {
                     Instance.UpdateManagers.Remove(u);
                 }
