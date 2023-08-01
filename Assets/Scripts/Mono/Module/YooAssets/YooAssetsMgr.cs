@@ -54,6 +54,7 @@ namespace YooAsset
                         File.Delete(oldPatch);
                     }
                 }
+                staticVersion = buildInVersion;
             }
             string path = string.Format(PatchManifestStreamingPath, buildInVersion);
             _downloader1 = new UnityWebDataRequester();
@@ -70,10 +71,18 @@ namespace YooAsset
             if (staticVersion > buildInVersion)
             {
                 path = string.Format(PatchManifestPersistentPath, staticVersion);
-                jStr = File.ReadAllText(path);
-                Debug.Log("Load staticManifest at"+path+" jstr == null?"+string.IsNullOrEmpty(jStr));
-                if(!string.IsNullOrEmpty(jStr))
-                    staticManifest = Deserialize(jStr);
+                if (File.Exists(path))
+                {
+                    jStr = File.ReadAllText(path);
+                    Debug.Log("Load staticManifest at" + path + " jstr == null?" + string.IsNullOrEmpty(jStr));
+                    if (!string.IsNullOrEmpty(jStr))
+                        staticManifest = Deserialize(jStr);
+                }
+                else
+                {
+                    staticVersion = buildInVersion;
+                    PlayerPrefs.SetInt("STATIC_VERSION", staticVersion);
+                }
             }
 
             if (mode == YooAssets.EPlayMode.EditorSimulateMode)
