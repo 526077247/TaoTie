@@ -61,6 +61,7 @@ namespace TaoTie
 				yield return YooAssetsMgr.Instance.Init(YooAssets.EPlayMode.OfflinePlayMode);
 				var createParameters = new YooAssets.OfflinePlayModeParameters();
 				createParameters.LocationServices = new AddressByPathLocationServices("Assets/AssetsPackage");
+				createParameters.DecryptionServices = new BundleDecryption();
 				yield return YooAssets.InitializeAsync(createParameters);
 				// 先设置更新补丁清单
 				yield return YooAssets.WeaklyUpdateManifestAsync(YooAssetsMgr.Instance.staticVersion);
