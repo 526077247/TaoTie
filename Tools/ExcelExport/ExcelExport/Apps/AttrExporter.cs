@@ -9,7 +9,7 @@ namespace TaoTie
 {
     internal class AttrExporter
     {
-        private const string ClassDir = "../Assets/Scripts/Code/Game/Battle/Component/Numeric/NumericType.cs";
+        private const string ClassDir = "../Assets/Scripts/Code/Module/Const/NumericType.cs";
 
         private const string excelDir = "../Excel";
         public class Info
@@ -42,41 +42,38 @@ namespace TaoTie
                 str.AppendLine("{");
                 str.AppendLine("    public class NumericType");
                 str.AppendLine("    {");
-                str.AppendLine("        public int this[string key]");
+                str.AppendLine("        public static int GetKey(string key)");
                 str.AppendLine("        {");
-                str.AppendLine("            get");
+                str.AppendLine("            if (Map.TryGetValue(key, out var res))");
                 str.AppendLine("            {");
-                str.AppendLine("                if (Map.TryGetValue(key, out var res))");
-                str.AppendLine("                {");
-                str.AppendLine("                    return res;");
-                str.AppendLine("                }");
-                str.AppendLine("                Log.Error($\"{key}属性不存在\");");
-                str.AppendLine("                return -1;");
+                str.AppendLine("                return res;");
                 str.AppendLine("            }");
+                str.AppendLine("            Log.Error($\"{key}属性不存在\");");
+                str.AppendLine("            return -1;");
                 str.AppendLine("        }");
-                str.AppendLine("        private static Dictionary<string, int> __Map;");
+                str.AppendLine("        private static Dictionary<string, int> map;");
                 str.AppendLine("        public static Dictionary<string, int> Map");
                 str.AppendLine("        {");
                 str.AppendLine("            get");
                 str.AppendLine("            {");
-                str.AppendLine("                if (__Map == null)");
+                str.AppendLine("                if (map == null)");
                 str.AppendLine("                {");
-                str.AppendLine("                    __Map = new Dictionary<string, int>();");
+                str.AppendLine("                    map = new Dictionary<string, int>();");
                 foreach (var item in list)
                 {
-                    str.AppendLine($"                    __Map.Add(\"{item.Key}\",{item.Key});");
-                    str.AppendLine($"                    __Map.Add(\"{item.Key}Base\",{item.Key}Base);");
+                    str.AppendLine($"                    map.Add(\"{item.Key}\",{item.Key});");
+                    str.AppendLine($"                    map.Add(\"{item.Key}Base\",{item.Key}Base);");
                     if (item.Affected == "1")
                     {
-                        str.AppendLine($"                    __Map.Add(\"{item.Key}Add\",{item.Key}Add);");
-                        str.AppendLine($"                    __Map.Add(\"{item.Key}Pct\",{item.Key}Pct);");
-                        str.AppendLine($"                    __Map.Add(\"{item.Key}FinalAdd\",{item.Key}FinalAdd);");
-                        str.AppendLine($"                    __Map.Add(\"{item.Key}FinalPct\",{item.Key}FinalPct);");
+                        str.AppendLine($"                    map.Add(\"{item.Key}Add\",{item.Key}Add);");
+                        str.AppendLine($"                    map.Add(\"{item.Key}Pct\",{item.Key}Pct);");
+                        str.AppendLine($"                    map.Add(\"{item.Key}FinalAdd\",{item.Key}FinalAdd);");
+                        str.AppendLine($"                    map.Add(\"{item.Key}FinalPct\",{item.Key}FinalPct);");
                     }
                 }
 
                 str.AppendLine("                }");
-                str.AppendLine("                return __Map;");
+                str.AppendLine("                return map;");
                 str.AppendLine("            }");
                 str.AppendLine("        }");
                 str.AppendLine("		public const int Max = 10000;");

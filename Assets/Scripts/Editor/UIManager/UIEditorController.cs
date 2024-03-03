@@ -11,9 +11,9 @@ namespace TaoTie
 {
     public class UIScriptController
     {
-        static string addressable_path = "Assets/AssetsPackage/";
-        static string generate_path = "Game";
-        static bool forced_coverage = false; //是否强制覆盖
+        static string addressablePath = "Assets/AssetsPackage/";
+        static string generatePath = "Game";
+        static bool forcedCoverage = false; //是否强制覆盖
 
         public static bool AllowGenerate(GameObject go, string path)
         {
@@ -30,7 +30,7 @@ namespace TaoTie
                 return false;
             }
 
-            return path.Contains(addressable_path);
+            return path.Contains(addressablePath);
         }
 
         public static void GenerateUICode(GameObject go, string path)
@@ -72,14 +72,14 @@ namespace TaoTie
                 Log.Error("ui预制体路径应为  Assets/AssetsPackage/UI模块/UI子模块/Prefabs/预制体");
                 return;
             }
-            var dirPath = $"Assets/Scripts/Code/{generate_path}/{temp[index + 1]}/{temp[index + 2]}";
+            var dirPath = $"Assets/Scripts/Code/{generatePath}/{temp[index + 1]}/{temp[index + 2]}";
             if (!Directory.Exists(dirPath))
             {
                 Directory.CreateDirectory(dirPath);
             }
 
             var csPath = $"{dirPath}/{name}.cs";
-            if (!forced_coverage && File.Exists(csPath))
+            if (!forcedCoverage && File.Exists(csPath))
             {
                 UnityEngine.Debug.LogError("已存在 " + csPath + ",将不会再次生成。");
                 return;
@@ -103,7 +103,7 @@ namespace TaoTie
             if (!isItem)
             {
                 strBuilder.AppendFormat("\t\tpublic static string PrefabPath => \"{0}\";",
-                        path.Replace(addressable_path, ""))
+                        path.Replace(addressablePath, ""))
                     .AppendLine();
             }
 
@@ -153,7 +153,7 @@ namespace TaoTie
                     bool had = false;
                     foreach (var uiComponent in WidgetInterfaceList)
                     {
-                        Component component = child.GetComponent(uiComponent.Key);
+                        UnityEngine.Component component = child.GetComponent(uiComponent.Key);
                         if (null != component)
                         {
                             had = true;
@@ -193,7 +193,7 @@ namespace TaoTie
                     bool had = false;
                     foreach (var uiComponent in WidgetInterfaceList)
                     {
-                        Component component = child.GetComponent(uiComponent.Key);
+                        UnityEngine.Component component = child.GetComponent(uiComponent.Key);
                         if (null != component)
                         {
                             had = true;
