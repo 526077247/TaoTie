@@ -41,9 +41,13 @@ namespace TaoTie
 						if (item.FullName.Contains("Unity.Code"))
 						{
 							assembly = item;
-							Debug.Log("Get AOT Dll Success");
+							Log.Info("Get AOT Dll Success");
 							break;
 						}
+					}
+					if (assembly == null)
+					{
+						Log.Error("Get AOT Dll Fail, 请将Init上的CodeMode改为LoadDll，或者在打包选项上开启热更代码打AOT");
 					}
 					break;
 				}
@@ -60,7 +64,7 @@ namespace TaoTie
 							if (item.FullName.Contains("Unity.Code"))
 							{
 								assembly = item;
-								Debug.Log("Get AOT Dll Success");
+								Log.Info("Get AOT Dll Success");
 								break;
 							}
 						}
@@ -77,10 +81,13 @@ namespace TaoTie
 					{
 						GetBytes(out ab, out assBytes, out pdbBytes);
 						assembly = Assembly.Load(assBytes, pdbBytes);
-						Debug.Log("Get Dll Success");
+						Log.Info("Get Dll Success");
 					}
 					break;
 				}
+				default:
+					Log.Error("CodeMode = " + CodeMode);
+					return;
 			}
 
 			if (assembly != null)
@@ -90,6 +97,10 @@ namespace TaoTie
 				AssemblyManager.Instance.AddHotfixAssembly(assembly);
 				IStaticAction start = new MonoStaticAction(assembly, "TaoTie.Entry", "Start");
 				start.Run();
+			}
+			else
+			{
+				Log.Error("assembly == null");
 			}
 			if (YooAssets.PlayMode != YooAssets.EPlayMode.EditorSimulateMode)
 				ab?.Unload(true);
