@@ -251,8 +251,8 @@ namespace TaoTie
 
 
             var cancelBtnText = this.ForceUpdate ? "Btn_Exit" : "Btn_Enter_Game";
-            var contentUpdata = this.ForceUpdate ? "Update_ReDownload" : "Update_SuDownload";
-            var btnState = await this.ShowMsgBoxView(contentUpdata, "Global_Btn_Confirm", cancelBtnText);
+            var contentUpdate = this.ForceUpdate ? "Update_ReDownload" : "Update_SuDownload";
+            var btnState = await this.ShowMsgBoxView(contentUpdate, "Global_Btn_Confirm", cancelBtnText);
 
             if (btnState == this.BTN_CONFIRM)
             {
@@ -353,6 +353,9 @@ namespace TaoTie
                     Application.Quit();
                     return false;
                 }
+                //版本号设回去
+                operation = YooAssets.UpdateManifestAsync(YooAssetsMgr.Instance.Config.Resver,30);
+                await operation.Task;
                 return true;
             }
 
