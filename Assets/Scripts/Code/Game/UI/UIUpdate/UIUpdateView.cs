@@ -324,6 +324,10 @@ namespace TaoTie
                     Application.Quit();
                     return false;
                 }
+                //版本号设回去
+                operation = YooAssets.UpdateManifestAsync(YooAssetsMgr.Instance.Config.Resver,30);
+                await operation.Task;
+                return false;
             }
 
             Log.Info("创建补丁下载器.");
@@ -356,7 +360,7 @@ namespace TaoTie
                 //版本号设回去
                 operation = YooAssets.UpdateManifestAsync(YooAssetsMgr.Instance.Config.Resver,30);
                 await operation.Task;
-                return true;
+                return false;
             }
 
             //开始进行更新
