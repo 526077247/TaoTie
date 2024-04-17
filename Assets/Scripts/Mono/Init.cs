@@ -83,6 +83,8 @@ namespace TaoTie
 				yield return YooAssets.WeaklyUpdateManifestAsync(YooAssetsMgr.Instance.staticVersion);
 			}
 			
+			RegisterManager();
+			
 			CodeLoader.Instance.CodeMode = this.CodeMode;
 			IsInit = true;
 			CodeLoader.Instance.Start();
@@ -108,12 +110,21 @@ namespace TaoTie
 		public IEnumerator ReStart()
 		{
 			CodeLoader.Instance.isReStart = false;
+			ManagerProvider.Clear();
 			yield return YooAssetsMgr.Instance.Init(YooAssets.PlayMode);
 			// 先设置更新补丁清单
 			yield return YooAssets.WeaklyUpdateManifestAsync(YooAssetsMgr.Instance.staticVersion);
 			Log.Debug("ReStart");
+
+			RegisterManager();
+			
 			CodeLoader.Instance.OnApplicationQuit?.Invoke();
 			CodeLoader.Instance.Start();
+		}
+		
+		private void RegisterManager()
+		{
+			ManagerProvider.RegisterManager<AssemblyManager>();
 		}
 
 		private void LateUpdate()

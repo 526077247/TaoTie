@@ -9,6 +9,7 @@ namespace TaoTie
         {
             try
             {
+                ManagerProvider.RegisterManager<Messager>();
                 ManagerProvider.RegisterManager<AttributeManager>();
                 
                 ManagerProvider.RegisterManager<CoroutineLockManager>();
@@ -44,6 +45,7 @@ namespace TaoTie
 
         static void StartGame()
         {
+            //热更完
             SceneManager.Instance.SwitchScene<LoginScene>().Coroutine();
         }
     }
