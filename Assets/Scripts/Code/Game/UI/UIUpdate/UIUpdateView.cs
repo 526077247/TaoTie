@@ -234,7 +234,7 @@ namespace TaoTie
             }
 
             var appURL = channelAppUpdateList.app_url;
-            var verInfo = channelAppUpdateList.app_ver[appVer];
+            channelAppUpdateList.app_ver.TryGetValue(appVer, out var verInfo);//按当前版本来
             Log.Info("CheckAppUpdate app_url = " + appURL);
 
             this.ForceUpdate = Define.ForceUpdate; 
