@@ -284,7 +284,7 @@ namespace TaoTie
                 return false;
             }
             
-            if (this.StaticVersion > YooAssetsMgr.Instance.Config.Resver)
+            if (this.StaticVersion < YooAssetsMgr.Instance.Config.Resver)
             {
                 Log.Info("CheckResUpdate ResVer is Most Max Version, so return;");
                 return false;
