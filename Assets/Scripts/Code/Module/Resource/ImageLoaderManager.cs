@@ -677,6 +677,7 @@ namespace TaoTie
 
         public async ETTask<Sprite> GetOnlineSprite(string url,int tryCount = 3)
         {
+            if (string.IsNullOrWhiteSpace(url)) return null;
             CoroutineLock coroutineLock = null;
             try
             {
@@ -734,8 +735,9 @@ namespace TaoTie
             return null;
         }
         
-         public async ETTask<Texture2D> GetOnlineTexture(string url,int tryCount = 3)
+        public async ETTask<Texture2D> GetOnlineTexture(string url,int tryCount = 3)
         {
+            if (string.IsNullOrWhiteSpace(url)) return null;
             CoroutineLock coroutineLock = null;
             try
             {
