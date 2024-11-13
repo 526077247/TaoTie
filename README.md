@@ -15,4 +15,5 @@
 3. [TaoTie4ET](https://github.com/526077247/TaoTie4ET) 接入和ETPro服务端通讯的TaoTie
 
 # 商业项目
+[《千奇百科岛》](https://apps.apple.com/cn/app/%E5%8D%83%E5%A5%87%E7%99%BE%E7%A7%91%E5%B2%9B-dk%E5%84%BF%E7%AB%A5%E7%99%BE%E7%A7%91app/id6502377159)
 [《琉璃异闻录：远行序章》](https://store.steampowered.com/app/2389010/_/)
