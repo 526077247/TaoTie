@@ -2,6 +2,6 @@ namespace TaoTie
 {
     public class TimerType
     {
-        public static int ComponentUpdate = 1001;
+        public const int ComponentUpdate = 1004;
     }
 }
