@@ -40,12 +40,12 @@ namespace TaoTie
         }
 
         public static void Build(PlatformType type, BuildOptions buildOptions, bool isBuildExe, bool clearFolder,
-            bool buildResourceAll, bool isPackAtlas)
+            bool buildHotfixAssembliesAOT, bool isBuildAll, bool isPackAtlas)
         {
             if (buildmap[type] == EditorUserBuildSettings.activeBuildTarget)
             {
                 //pack
-                BuildHandle(type, buildOptions, isBuildExe, clearFolder, buildResourceAll, isPackAtlas);
+                BuildHandle(type, buildOptions, isBuildExe, clearFolder,buildHotfixAssembliesAOT, isBuildAll, isPackAtlas);
             }
             else
             {
@@ -54,7 +54,7 @@ namespace TaoTie
                     if (EditorUserBuildSettings.activeBuildTarget == buildmap[type])
                     {
                         //pack
-                        BuildHandle(type, buildOptions, isBuildExe, clearFolder, buildResourceAll, isPackAtlas);
+                        BuildHandle(type, buildOptions, isBuildExe, clearFolder,buildHotfixAssembliesAOT, isBuildAll, isPackAtlas);
                     }
                 };
                 if (buildGroupmap.TryGetValue(type, out var group))
@@ -120,7 +120,7 @@ namespace TaoTie
         }
 
         static void BuildHandle(PlatformType type, BuildOptions buildOptions, bool isBuildExe, bool clearFolder,
-            bool buildResourceAll, bool isPackAtlas)
+            bool buildHotfixAssembliesAOT, bool isBuildAll, bool isPackAtlas)
         {
             BuildTarget buildTarget = BuildTarget.StandaloneWindows;
             string programName = "TaoTie";
@@ -175,7 +175,7 @@ namespace TaoTie
             }
                               
             //打ab
-            BuildInternal(buildTarget, isBuildExe, buildResourceAll);
+            BuildInternal(buildTarget, isBuildExe, isBuildAll);
 
             if (clearFolder && Directory.Exists(relativeDirPrefix))
             {
@@ -189,7 +189,7 @@ namespace TaoTie
 
             if (isBuildExe)
             {
-
+                FilterCodeAssemblies.buildHotfixAssembliesAOT = buildHotfixAssembliesAOT;
                 AssetDatabase.Refresh();
                 string[] levels =
                 {

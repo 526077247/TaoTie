@@ -7,8 +7,9 @@ namespace TaoTie
     {
         public bool clearFolder = false;
         public bool isBuildExe = false;
+        public bool buildHotfixAssembliesAOT = true;
         public bool isContainAB = false;
-        public bool buildResourceAll;
+        public bool isBuildAll;
         public bool isPackAtlas;
         public BuildType buildType = BuildType.Release;
         public BuildAssetBundleOptions buildAssetBundleOptions = BuildAssetBundleOptions.None;

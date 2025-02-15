@@ -46,7 +46,8 @@ namespace TaoTie
 		private PlatformType platformType;
 		private bool clearFolder;
 		private bool isBuildExe;
-		private bool buildResourceAll;
+		private bool buildHotfixAssembliesAOT;
+		private bool isBuildAll;
 		private bool isContainAB;
 		private bool isPackAtlas;
 		private BuildType buildType;
@@ -89,7 +90,8 @@ namespace TaoTie
 
 				clearFolder = buildSettings.clearFolder;
 				isBuildExe = buildSettings.isBuildExe;
-				buildResourceAll = buildSettings.buildResourceAll;
+				buildHotfixAssembliesAOT = buildSettings.buildHotfixAssembliesAOT;
+				isBuildAll = buildSettings.isBuildAll;
 				isContainAB = buildSettings.isContainAB;
 				isPackAtlas = buildSettings.isPackAtlas;
 				buildType = buildSettings.buildType;
@@ -130,7 +132,8 @@ namespace TaoTie
             this.isBuildExe = EditorGUILayout.Toggle("是否打包EXE(整包): ", this.isBuildExe);
             if (this.isBuildExe)
             {
-	            this.buildResourceAll = EditorGUILayout.Toggle("是否打全量包: ", this.buildResourceAll);
+	            this.buildHotfixAssembliesAOT = EditorGUILayout.Toggle("  打AOT?(代码混淆会失效): ", this.buildHotfixAssembliesAOT);
+	            this.isBuildAll = EditorGUILayout.Toggle("是否打全量包: ", this.isBuildAll);
             }
             this.buildType = (BuildType)EditorGUILayout.EnumPopup("BuildType: ", this.buildType);
 			//EditorGUILayout.LabelField("BuildAssetBundleOptions(可多选):");
@@ -170,7 +173,7 @@ namespace TaoTie
                     }
                 }
 				
-				BuildHelper.Build(this.platformType, this.buildOptions, this.isBuildExe,this.clearFolder,this.buildResourceAll,this.isPackAtlas);
+				BuildHelper.Build(this.platformType, this.buildOptions, this.isBuildExe,this.clearFolder,buildHotfixAssembliesAOT, this.isBuildAll,this.isPackAtlas);
 			}
 
 			GUILayout.Space(5);
@@ -182,7 +185,8 @@ namespace TaoTie
 			buildSettings.isBuildExe = isBuildExe;
 			buildSettings.isContainAB = isContainAB;
 			buildSettings.isPackAtlas = isPackAtlas;
-			buildResourceAll = buildSettings.buildResourceAll;
+			buildSettings.isBuildAll = isBuildAll;
+			buildSettings.buildHotfixAssembliesAOT = buildHotfixAssembliesAOT;
 			buildSettings.buildType = buildType;
 			buildSettings.buildAssetBundleOptions = buildAssetBundleOptions;
 
