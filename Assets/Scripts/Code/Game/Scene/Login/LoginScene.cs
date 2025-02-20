@@ -6,7 +6,7 @@ namespace TaoTie
     {
         private UILoadingView win;
         private string[] dontDestroyWindow = {"UILoadingView"};
-        public List<string> scenesChangeIgnoreClean;
+        private List<string> scenesChangeIgnoreClean;
         public string[] GetDontDestroyWindow()
         {
             return dontDestroyWindow;
@@ -31,6 +31,8 @@ namespace TaoTie
 
         public async ETTask OnLeave()
         {
+            scenesChangeIgnoreClean .Clear();
+            scenesChangeIgnoreClean = null;
             await ETTask.CompletedTask;
         }
 
@@ -49,7 +51,10 @@ namespace TaoTie
             win.SetProgress(value);
             await ETTask.CompletedTask;
         }
-
+        public string GetName()
+        {
+            return "Login";
+        }
         public string GetScenePath()
         {
             return "Scenes/LoginScene/Login.unity";

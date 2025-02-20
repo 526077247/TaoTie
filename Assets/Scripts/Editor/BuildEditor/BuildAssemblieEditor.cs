@@ -9,7 +9,7 @@ using UnityEditor.Compilation;
 
 namespace TaoTie
 {
-    public static class BuildAssemblieEditor
+    public static class BuildAssemblyEditor
     {
         private static bool IsBuildCodeAuto;
         [MenuItem("Tools/Build/EnableAutoBuildCodeDebug _F1")]
@@ -30,9 +30,9 @@ namespace TaoTie
         public static void BuildCodeDebug()
         {
             string jstr = File.ReadAllText("Assets/AssetsPackage/config.bytes");
-            var config = JsonHelper.FromJson<BuildInConfig>(jstr);
-            string assemblyName = "Code" + config.Dllver;
-            BuildAssemblieEditor.BuildMuteAssembly(assemblyName, new []
+            var config = JsonHelper.FromJson<PackageConfig>(jstr);
+            string assemblyName = "Code" + config.GetPackageMaxVersion(Define.DefaultName);
+            BuildMuteAssembly(assemblyName, new []
             {
                 "Assets/Scripts/Code",
             }, Array.Empty<string>(), CodeOptimization.Debug);
@@ -45,9 +45,9 @@ namespace TaoTie
         public static void BuildCodeRelease()
         {
             string jstr = File.ReadAllText("Assets/AssetsPackage/config.bytes");
-            var config = JsonHelper.FromJson<BuildInConfig>(jstr);
-            string assemblyName = "Code" + config.Dllver;
-            BuildAssemblieEditor.BuildMuteAssembly(assemblyName, new []
+            var config = JsonHelper.FromJson<PackageConfig>(jstr);
+            string assemblyName = "Code" + config.GetPackageMaxVersion(Define.DefaultName);
+            BuildMuteAssembly(assemblyName, new []
             {
                 "Assets/Scripts/Code",
             }, Array.Empty<string>(),CodeOptimization.Release);
@@ -157,7 +157,7 @@ namespace TaoTie
             }
             AfterBuild(assemblyName);
             //反射获取当前Game视图，提示编译完成
-            ShowNotification("Build Code Success");
+            // ShowNotification("Build Code Success");
         }
         
         public static void AfterBuild(string assemblyName)

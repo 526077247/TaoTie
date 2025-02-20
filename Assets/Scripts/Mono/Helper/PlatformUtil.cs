@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -9,6 +10,27 @@ namespace TaoTie
 {
     public class PlatformUtil
     {
+#if UNITY_WEBGL
+        [DllImport("__Internal")]
+        private static extern int GetWebGLUA();
+#endif
+        /// <summary>
+        /// 1：pc 2: android 3: ios
+        /// </summary>
+        /// <returns></returns>
+        public static int GetSystemTypeWithWebGL()
+        {
+#if UNITY_EDITOR
+            return 1;
+#elif UNITY_ANDROID
+            return 2;
+#elif UNITY_IOS
+            return 3;
+#elif UNITY_WEBGL
+            return GetWebGLUA();
+#endif
+            return 1;
+        }
         public static int GetIntPlatform()
         {
             return (int)Application.platform;
@@ -32,6 +54,8 @@ namespace TaoTie
             return "android";
 #elif UNITY_IOS
             return "ios";
+#elif UNITY_WEBGL
+            return "webgl";
 #endif
             return "pc";
         }
@@ -54,20 +78,6 @@ namespace TaoTie
         public static bool IsMobile()
         {
             return IsAndroid() || IsIphone();
-        }
-
-        public static string GetAppChannel()
-        {
-            if (IsAndroid()) return "googleplay";
-            else if (IsIphone()) return "applestore";
-            else if (IsWindows()) return "pc";
-#if UNITY_ANDROID
-            return "googleplay";
-#elif UNITY_IOS
-            return "applestore";
-#else 
-            return "pc";
-#endif
         }
     }
 }

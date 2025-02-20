@@ -1,5 +1,6 @@
 using System;
 using System.Threading;
+using YooAsset;
 
 namespace TaoTie
 {
@@ -7,15 +8,26 @@ namespace TaoTie
     {
         public static void Start()
         {
+            StartAsync().Coroutine();
+        }
+
+        private static async ETTask StartAsync()
+        {
             try
             {
                 ManagerProvider.RegisterManager<Messager>();
+
                 ManagerProvider.RegisterManager<AttributeManager>();
                 
                 ManagerProvider.RegisterManager<CoroutineLockManager>();
                 ManagerProvider.RegisterManager<TimerManager>();
                 
-                ManagerProvider.RegisterManager<ConfigManager>();
+                ManagerProvider.RegisterManager<CacheManager>();
+                ManagerProvider.RegisterManager<HttpManager>();
+                
+                var cm = ManagerProvider.RegisterManager<ConfigManager>();
+                await cm.LoadAsync();
+                
                 ManagerProvider.RegisterManager<ResourcesManager>();
                 ManagerProvider.RegisterManager<GameObjectPoolManager>();
                 ManagerProvider.RegisterManager<ImageLoaderManager>();
@@ -23,29 +35,30 @@ namespace TaoTie
                 
                 ManagerProvider.RegisterManager<I18NManager>();
                 ManagerProvider.RegisterManager<UIManager>();
+                ManagerProvider.RegisterManager<UIMsgBoxManager>();
 
                 ManagerProvider.RegisterManager<CameraManager>();
                 ManagerProvider.RegisterManager<SceneManager>();
                 
                 ManagerProvider.RegisterManager<ServerConfigManager>();
-                StartGameAsync().Coroutine();
+                if(PackageManager.Instance.PlayMode == EPlayMode.HostPlayMode && (Define.Networked||Define.ForceUpdate))
+                    await UIManager.Instance.OpenWindow<UIUpdateView,Action>(UIUpdateView.PrefabPath,StartGame);//下载热更资源
+                else
+                    StartGame();
             }
             catch (Exception e)
             {
                 Log.Error(e);
             }
         }
-        static async ETTask StartGameAsync()
-        {
-            if(Define.Networked||Define.ForceUpdate)
-                await UIManager.Instance.OpenWindow<UIUpdateView,Action>(UIUpdateView.PrefabPath,StartGame);//下载热更资源
-            else
-                StartGame();
-        }
-
         static void StartGame()
         {
-            //热更完
+            StartGameAsync().Coroutine();
+        }
+
+        static async ETTask StartGameAsync()
+        {
+            await PackageManager.Instance.UnloadUnusedAssets(Define.DefaultName);
             SceneManager.Instance.SwitchScene<LoginScene>().Coroutine();
         }
     }

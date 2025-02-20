@@ -3,6 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using YooAsset;
+
 namespace TaoTie
 {
     /// <summary>
@@ -20,11 +22,13 @@ namespace TaoTie
     ///         严禁直接调用GameObject.Destroy方法来进行销毁，而应该采用GameObjectPool.DestroyGameObject方法</para>
     /// <para>不管是销毁还是回收，都不要污染go，保证干净</para>
     /// </summary>
-    public class GameObjectPoolManager:IManager
+    public class GameObjectPoolManager:IManager,IManager<string>
     {
+	    public string PackageName { get; private set; } = Define.DefaultName;
+	    private static Dictionary<string, GameObjectPoolManager> instances = new();
 
-        public static GameObjectPoolManager Instance { get; private set; }
         private Transform cacheTransRoot;
+
 
         private LruCache<string, GameObject> goPool;
         private Dictionary<string, int> goInstCountCache;//go: inst_count 用于记录go产生了多少个实例
@@ -35,13 +39,30 @@ namespace TaoTie
         private Dictionary<GameObject, string> instPathCache;// inst : prefab_path 用于销毁和回收时反向找到inst对应的prefab TODO:这里有优化空间path太占内存
         private Dictionary<string, bool> persistentPathCache;//需要持久化的资源
         private Dictionary<string, Dictionary<string, int>> detailGoChildsCount;//记录go子控件具体数量信息
-        
+
+        public static GameObjectPoolManager GetInstance(string package = null)
+        {
+	        if (package == null) package = Define.DefaultName;
+	        if (!instances.TryGetValue(package, out var mgr))
+	        {
+		        mgr = ManagerProvider.RegisterManager<GameObjectPoolManager,string>(package,package);
+		        instances.Add(package, mgr);
+	        }
+	        return mgr;
+        }
+
         #region override
-        
+
+        public void Init(string name)
+        {
+	        Init();
+	        PackageName = name;
+        }
+
         public void Init()
         {
-	        Instance = this;
-            this.goPool = new LruCache<string, GameObject>();
+	        PackageName = Define.DefaultName;
+	        this.goPool = new LruCache<string, GameObject>();
             this.goInstCountCache = new Dictionary<string, int>();
             this.goChildsCountPool = new Dictionary<string, int>();
             this.instCache = new Dictionary<string, List<GameObject>>();
@@ -73,8 +94,16 @@ namespace TaoTie
 
         public void Destroy()
         {
-	        Instance = null;
-            this.Cleanup();
+	        this.Cleanup();
+	        if (PackageName != null)
+	        {
+		        if (instances != null && instances.ContainsKey(PackageName))
+		        {
+			        instances.Remove(PackageName);
+		        }
+
+		        PackageName = null;
+	        }
         }
         
         #endregion
@@ -156,7 +185,7 @@ namespace TaoTie
 				}
 				else
 				{
-					var go = await ResourcesManager.Instance.LoadAsync<GameObject>(path);
+					var go = await ResourcesManager.Instance.LoadAsync<GameObject>(path,package: PackageName);
 					if (go != null)
 					{
 						this.CacheAndInstGameObject(path, go as GameObject, instCount);
@@ -235,6 +264,7 @@ namespace TaoTie
 			if (!this.instPathCache.ContainsKey(inst))
 			{
 				Log.Error("RecycleGameObject inst not found from instPathCache");
+				GameObject.Destroy(inst);
 				return;
 			}
 			var path = this.instPathCache[inst];
@@ -286,7 +316,7 @@ namespace TaoTie
 		/// <param name="excludePathArray">忽略的</param>
 		public void Cleanup(bool includePooledGo = true, List<string> excludePathArray = null)
 		{
-			Log.Info("GameObjectPool Cleanup ");
+			Log.Info("GameObjectPool Cleanup "+PackageName);
 			foreach (var item in this.instCache)
 			{
 				for (int i = 0; i < item.Value.Count; i++)
@@ -329,7 +359,7 @@ namespace TaoTie
 					}
 				}
 			}
-			Log.Info("GameObjectPool Cleanup Over");
+			Log.Info("GameObjectPool Cleanup Over"+PackageName);
 		}
 
 		/// <summary>

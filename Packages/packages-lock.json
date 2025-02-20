@@ -1,9 +1,9 @@
 {
   "dependencies": {
     "com.tuyoogame.yooasset": {
-      "version": "file:com.tuyoogame.yooasset@1.2.2",
+      "version": "file:../Modules/com.tuyoogame.yooasset",
       "depth": 0,
-      "source": "embedded",
+      "source": "local",
       "dependencies": {
         "com.unity.scriptablebuildpipeline": "1.20.2",
         "com.unity.modules.assetbundle": "1.0.0",

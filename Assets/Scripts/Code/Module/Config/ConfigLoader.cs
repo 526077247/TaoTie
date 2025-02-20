@@ -5,22 +5,39 @@ namespace TaoTie
 {
     public class ConfigLoader : IConfigLoader
     {
-        public void GetAllConfigBytes(Dictionary<string, byte[]> output)
+        public async ETTask GetAllConfigBytes(Dictionary<string, byte[]> output)
         {
-            Dictionary<string, TextAsset> keys = YooAssetsMgr.Instance.LoadAllTextAsset();
+            var assets = PackageManager.Instance.GetAssetInfos("config",Define.DefaultName);
 
-            foreach (var kv in keys)
+            using (ListComponent<ETTask> tasks = new ListComponent<ETTask>())
             {
-                TextAsset v = kv.Value;
-                string key = kv.Key;
-                output[key] = v.bytes;
-            }
-        }
+                foreach (var asset in assets)
+                {
+                    tasks.Add(LoadConfigBytes(asset,output));
+                }
 
-        public byte[] GetOneConfigBytes(string configName)
+                await ETTaskHelper.WaitAll(tasks);
+            }
+            
+        }
+        private async ETTask LoadConfigBytes(AssetInfo asset,Dictionary<string, byte[]> output)
         {
-            TextAsset v = YooAssetsMgr.Instance.LoadTextAsset("Config/"+configName+".bytes");
-            return v.bytes;
+            var op = PackageManager.Instance.LoadAssetAsync(asset,Define.DefaultName);
+            await op.Task;
+            TextAsset v = op.AssetObject as TextAsset;
+            string key = asset.Address;
+            output[key] = v.bytes;
+            op.Release();
+        }
+        
+        public async ETTask<byte[]> GetOneConfigBytes(string configName)
+        {
+            var op = YooAssets.LoadAssetAsync(configName, TypeInfo<TextAsset>.Type);
+            await op.Task;
+            TextAsset v = op.AssetObject as TextAsset;
+            var bytes = v.bytes;
+            op.Release();
+            return bytes;
         }
     }
 }
