@@ -141,8 +141,8 @@ namespace YooAsset
             _newList.Add(operation);
             operation.SetPackageName(packageName);
             operation.SetStart();
-            			
-            if (QuickStartMode)
+
+            if (QuickStartMode && !IsBusy)
             {
                 operation.InternalOnUpdate();
             }
