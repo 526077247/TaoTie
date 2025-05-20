@@ -1,6 +1,6 @@
-﻿﻿using System;
+﻿using System;
 
-namespace LitJson.Extensions {
+namespace TaoTie.LitJson.Extensions {
 
     /// <summary>
     /// 拓展方法
@@ -36,5 +36,19 @@ namespace LitJson.Extensions {
     public sealed class JsonIgnore : Attribute
     {
 	    public static readonly Type Type = typeof(JsonIgnore);
+    }
+    
+    /// <summary>
+    /// 覆盖json节点读写名称
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false)]
+    public sealed class JsonNode : Attribute
+    {
+	    public string Name;
+	    public JsonNode(string name)
+	    {
+		    Name = name;
+	    }
+	    public static readonly Type Type = typeof(JsonNode);
     }
 }

@@ -8,18 +8,19 @@ MonoBehaviour:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
   m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b216745cd6e9bc94da5bdf9fe8aae6d1, type: 3}
+  m_EditorHideFlags: 1
+  m_Script: {fileID: 11500000, guid: 6dbd40e4366dd95439decc1f046ebd41, type: 3}
   m_Name: BuildSettings
   m_EditorClassIdentifier: 
   channel: googleplay
   buildMode: 0
-  clearFolder: 0
+  clearReleaseFolder: 1
+  clearABFolder: 1
   isBuildExe: 1
-  buildHotfixAssembliesAOT: 1
+  buildHotfixAssembliesAOT: 0
   isContainsAb: 0
   isBuildAll: 1
   isPackAtlas: 0
   cdn: 
-  buildType: 0
+  buildType: 1
   buildAssetBundleOptions: 0

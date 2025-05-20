@@ -17,14 +17,20 @@ namespace TaoTie
 
         private Dictionary<string, UIWindow> windows; //所有存活的窗体  {uiName:window}
         private Dictionary<UILayerNames, LinkedList<string>> windowStack; //窗口记录队列
+
         public float ScreenSizeFlag
         {
             get
             {
-                var flagx = (float) Define.DesignScreenWidth /
-                            (Screen.width > Screen.height ? Screen.width : Screen.height);
-                var flagy = (float) Define.DesignScreenHeight /
-                            (Screen.width > Screen.height ? Screen.height : Screen.width);
+                float width = Screen.width;
+                float height = Screen.height;
+#if UNITY_WEBGL_TT &&!UNITY_EDITOR
+                var safeArea = TTSDK.TT.GetSystemInfo().safeArea;
+                width = safeArea.width;
+                height = safeArea.height;
+#endif
+                var flagx = Define.DesignScreenWidth / width;
+                var flagy = Define.DesignScreenHeight / height;
                 return flagx > flagy ? flagx : flagy;
             }
         }
@@ -34,16 +40,23 @@ namespace TaoTie
 
         public void Init()
         {
-            Rect safeAreaRect = Screen.safeArea;
-            WidthPadding = safeAreaRect.x / 2;
+#if UNITY_WEBGL_TT &&!UNITY_EDITOR
+            var safeArea = TTSDK.TT.GetSystemInfo().safeArea;
+            WidthPadding = Mathf.Max(safeArea.width - safeArea.right , safeArea.left);
+#else
+            var safeArea = Screen.safeArea;
+            WidthPadding = safeArea.x;
+#endif
             Instance = this;
             windows = new Dictionary<string, UIWindow>();
             windowStack = new Dictionary<UILayerNames, LinkedList<string>>();
             InitLayer();
+            Messager.Instance.AddListener<int, int>(0, MessageId.OnKeyInput, OnKeyInput);
         }
 
         public void Destroy()
         {
+            Messager.Instance.RemoveListener<int, int>(0, MessageId.OnKeyInput, OnKeyInput);
             Instance = null;
             DestroyLayer();
             OnDestroyAsync().Coroutine();
@@ -59,13 +72,30 @@ namespace TaoTie
             Log.Info("UIManagerComponent Destroy");
         }
 
+        private void OnKeyInput(int key, int state)
+        {
+            if (key == (int) GameKeyCode.Back && (state & InputManager.KeyDown) != 0)
+            {
+                var win = GetTopWindow();
+                if (win != null && win.View != null && win.View.CanBack)
+                {
+                    win.View.OnInputKeyBack().Coroutine();
+                }
+            }
+        }
+
         #endregion
 
         public void ResetSafeArea()
         {
-            Rect safeAreaRect = Screen.safeArea;
-            SetWidthPadding(safeAreaRect.x / 2);
-            Log.Info(safeAreaRect);
+#if UNITY_WEBGL_TT && !UNITY_EDITOR
+            var safeArea = TTSDK.TT.GetSystemInfo().safeArea;
+            var temp = Mathf.Max(TTSDK.TT.GetSystemInfo().screenWidth - safeArea.right , safeArea.left);
+#else
+            var safeArea = Screen.safeArea;
+            var temp = safeArea.x;
+#endif
+            SetWidthPadding(temp);
         }
 
         /// <summary>
@@ -1209,8 +1239,15 @@ namespace TaoTie
         {
             var rectTrans = target.GetTransform().GetComponent<RectTransform>();
             var padding = WidthPadding;
-            rectTrans.offsetMin = new Vector2(padding * (1 - rectTrans.anchorMin.x), 0);
-            rectTrans.offsetMax = new Vector2(-padding * rectTrans.anchorMax.x, 0);
+#if UNITY_WEBGL_TT && !UNITY_EDITOR
+            var safeArea = TTSDK.TT.GetSystemInfo().safeArea;
+            var height = TTSDK.TT.GetSystemInfo().screenHeight;
+#else
+            var safeArea = Screen.safeArea;
+            var height = Screen.height;
+#endif
+            rectTrans.offsetMin = new Vector2(padding * (1 - rectTrans.anchorMin.x), safeArea.top * rectTrans.anchorMax.y * ScreenSizeFlag);
+            rectTrans.offsetMax = new Vector2(-padding * rectTrans.anchorMax.x, -(height - safeArea.bottom) * (1 - rectTrans.anchorMin.y) * ScreenSizeFlag);
         }
 
         #endregion

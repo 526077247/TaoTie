@@ -71,11 +71,10 @@ namespace TaoTie
             int thisVersion = version;
             if (spritePath == this.spritePath && !isSetSprite)
             {
-                this.image.enabled = true;
+                if (image != null) this.image.enabled = true;
                 callback?.Invoke();
                 return;
             }
-
             this.ActivatingComponent();
             if (this.bgAutoFit != null) this.bgAutoFit.enabled = false;
             this.image.enabled = false;

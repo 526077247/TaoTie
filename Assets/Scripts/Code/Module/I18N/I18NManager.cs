@@ -12,7 +12,7 @@ namespace TaoTie
         //语言类型枚举
 
         public LangType CurLangType { get; private set; }
-        private Dictionary<string, string> i18nTextKeyDic;
+        private Dictionary<int, string> i18nTextKeyDic;
         private bool addFonts = false;
         #region override
 
@@ -23,7 +23,9 @@ namespace TaoTie
             var lang = CacheManager.Instance.GetInt(CacheKeys.CurLangType, -1);
             if (lang < 0)
             {
-                this.CurLangType = Application.systemLanguage == SystemLanguage.Chinese
+                this.CurLangType = Application.systemLanguage == SystemLanguage.Chinese ||
+                                   Application.systemLanguage == SystemLanguage.ChineseSimplified ||
+                                   Application.systemLanguage == SystemLanguage.ChineseTraditional
                     ? LangType.Chinese
                     : LangType.English;
             }
@@ -31,9 +33,9 @@ namespace TaoTie
             {
                 this.CurLangType = (LangType)lang;
             }
-            this.i18nTextKeyDic = new Dictionary<string, string>();
+            this.i18nTextKeyDic = new Dictionary<int, string>();
             InitAsync().Coroutine();
-            //AddSystemFonts();
+            // AddSystemFonts();
         }
 
         private async ETTask InitAsync()
@@ -42,7 +44,7 @@ namespace TaoTie
             for (int i = 0; i <res.GetAllList().Count; i++)
             {
                 var item = res.GetAllList()[i];
-                this.i18nTextKeyDic.Add(item.Key, item.Value);
+                this.i18nTextKeyDic.Add(item.Id, item.Value);
             }
         }
 
@@ -61,9 +63,26 @@ namespace TaoTie
         /// </summary>
         /// <param name="key"></param>
         /// <returns></returns>
+        public string I18NGetText(I18NKey key)
+        {
+            if (!this.i18nTextKeyDic.TryGetValue((int)key, out var result))
+            {
+                Log.Error("多语言key未添加！ " + key);
+                result = key.ToString();
+                return result;
+            }
+
+            return result;
+        }
+        
+        /// <summary>
+        /// 取不到返回key
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns></returns>
         public string I18NGetText(string key)
         {
-            if (!this.i18nTextKeyDic.TryGetValue(key, out var result))
+            if (!I18NKey.TryParse(key,out I18NKey i18nKey) || !this.i18nTextKeyDic.TryGetValue((int)i18nKey, out var result))
             {
                 Log.Error("多语言key未添加！ " + key);
                 result = key;
@@ -79,12 +98,12 @@ namespace TaoTie
         /// <param name="key"></param>
         /// <param name="paras"></param>
         /// <returns></returns>
-        public string I18NGetParamText(string key, params object[] paras)
+        public string I18NGetParamText(I18NKey key, params object[] paras)
         {
-            if (!this.i18nTextKeyDic.TryGetValue(key, out var value))
+            if (!this.i18nTextKeyDic.TryGetValue((int)key, out var value))
             {
                 Log.Error("多语言key未添加！ " + key);
-                return key;
+                return key.ToString();
             }
 
             if (paras != null)
@@ -92,18 +111,39 @@ namespace TaoTie
             else
                 return value;
         }
+        
+        /// <summary>
+        /// 取配置多语言
+        /// </summary>
+        /// <param name="config"></param>
+        /// <returns></returns>
+        public string I18NGetText(II18NConfig config)
+        {
+            return config.GetI18NText(CurLangType);
+        }
+        
+        /// <summary>
+        /// 取配置多语言
+        /// </summary>
+        /// <param name="config"></param>
+        /// <param name="pos"></param>
+        /// <returns></returns>
+        public string I18NGetText(II18NSwitchConfig config, int pos = 0)
+        {
+            return config.GetI18NText(CurLangType, pos);
+        }
 
         /// <summary>
         /// 取不到返回key
         /// </summary>
         /// <param name="key"></param>
         /// <returns></returns>
-        public bool I18NTryGetText(string key, out string result)
+        public bool I18NTryGetText(I18NKey key, out string result)
         {
-            if (!this.i18nTextKeyDic.TryGetValue(key, out result))
+            if (!this.i18nTextKeyDic.TryGetValue((int)key, out result))
             {
                 Log.Info("多语言key未添加！ " + key);
-                result = key;
+                result = key.ToString();
                 return false;
             }
 
@@ -124,7 +164,7 @@ namespace TaoTie
             for (int i = 0; i <res.GetAllList().Count; i++)
             {
                 var item = res.GetAllList()[i];
-                this.i18nTextKeyDic.Add(item.Key, item.Value);
+                this.i18nTextKeyDic.Add(item.Id, item.Value);
             }
 
             I18NBridge.Instance.OnLanguageChangeEvt?.Invoke();

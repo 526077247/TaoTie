@@ -99,15 +99,15 @@ namespace TaoTie
             AssetDatabase.SaveAssetIfDirty(cdn);
         }
 
-        public static void Build(PlatformType type, BuildOptions buildOptions, bool isBuildExe, bool clearFolder,
-            bool buildHotfixAssembliesAOT, bool isBuildAll, bool packAtlas, bool isContainsAb, string channel,
-            bool buildDll = true)
+        public static void Build(PlatformType type, BuildOptions buildOptions, bool isBuildExe, bool clearReleaseFolder,
+            bool clearABFolder, bool buildHotfixAssembliesAOT, bool isBuildAll, bool packAtlas, bool isContainsAb, 
+            string channel, bool buildDll = true)
         {
             if (buildmap[type] == EditorUserBuildSettings.activeBuildTarget)
             {
                 //pack
-                BuildHandle(type, buildOptions, isBuildExe, clearFolder, buildHotfixAssembliesAOT, isBuildAll,
-                    packAtlas, isContainsAb, channel, buildDll);
+                BuildHandle(type, buildOptions, isBuildExe, clearReleaseFolder,clearABFolder, buildHotfixAssembliesAOT, 
+                    isBuildAll, packAtlas, isContainsAb, channel, buildDll);
             }
             else
             {
@@ -116,8 +116,8 @@ namespace TaoTie
                     if (EditorUserBuildSettings.activeBuildTarget == buildmap[type])
                     {
                         //pack
-                        BuildHandle(type, buildOptions, isBuildExe, clearFolder, buildHotfixAssembliesAOT, isBuildAll,
-                            packAtlas, isContainsAb, channel, buildDll);
+                        BuildHandle(type, buildOptions, isBuildExe, clearReleaseFolder,clearABFolder, buildHotfixAssembliesAOT, 
+                            isBuildAll, packAtlas, isContainsAb, channel, buildDll);
                     }
                 };
                 if (buildGroupmap.TryGetValue(type, out var group))
@@ -310,8 +310,8 @@ namespace TaoTie
             AtlasHelper.GeneratingAtlas();
         }
 
-        static void BuildHandle(PlatformType type, BuildOptions buildOptions, bool isBuildExe, bool clearFolder,
-            bool buildHotfixAssembliesAOT, bool isBuildAll, bool packAtlas, bool isContainsAb, 
+        static void BuildHandle(PlatformType type, BuildOptions buildOptions, bool isBuildExe, bool clearReleaseFolder,
+            bool clearABFolder, bool buildHotfixAssembliesAOT, bool isBuildAll, bool packAtlas, bool isContainsAb, 
             string channel, bool buildDll = true)
         {
             var vs = Application.version.Split(".");
@@ -328,7 +328,7 @@ namespace TaoTie
                     break;
                 case PlatformType.Android:
                     KeystoreSetting();
-                    PlayerSettings.Android.bundleVersionCode = bundleVersionCode;
+                    PlayerSettings.Android.bundleVersionCode = bundleVersionCode + 1;
                     EditorUserBuildSettings.exportAsGoogleAndroidProject = false;
                     buildTarget = BuildTarget.Android;
                     exeName += Application.version + ".apk";
@@ -385,11 +385,21 @@ namespace TaoTie
                 }
                 AssetDatabase.Refresh();
             }
+
+            if (clearABFolder)
+            {
+                string abPath = AssetBundleBuilderHelper.GetDefaultBuildOutputRoot();
+                if (Directory.Exists(abPath))
+                {
+                    Directory.Delete(abPath, true);
+                    Directory.CreateDirectory(abPath);
+                }
+            }
                               
             //打ab
             BuildInternal(buildTarget, isBuildAll, isContainsAb, channel);
 
-            if (clearFolder && Directory.Exists(relativeDirPrefix))
+            if (clearReleaseFolder && Directory.Exists(relativeDirPrefix))
             {
                 Directory.Delete(relativeDirPrefix, true);
                 Directory.CreateDirectory(relativeDirPrefix);
@@ -399,15 +409,17 @@ namespace TaoTie
                 Directory.CreateDirectory(relativeDirPrefix);
             }
 
-            if (isBuildExe)
+            // if (isBuildExe || buildTarget == BuildTarget.WebGL)
+            // {
+            //     if (HybridCLR.Editor.SettingsUtil.Enable)
+            //     {
+            //         HybridCLR.Editor.SettingsUtil.buildHotfixAssembliesAOT = buildHotfixAssembliesAOT;
+            //         HybridCLR.Editor.Commands.PrebuildCommand.GenerateAll();
+            //     }
+            // }
+
+            if(isBuildExe)
             {
-                FilterCodeAssemblies.buildHotfixAssembliesAOT = buildHotfixAssembliesAOT;
-                // if (HybridCLR.Editor.SettingsUtil.Enable)
-                // {
-                //     HybridCLR.Editor.SettingsUtil.buildHotfixAssembliesAOT = buildHotfixAssembliesAOT;
-                //     HybridCLR.Editor.Commands.PrebuildCommand.GenerateAll();
-                // } 
- 
                 AssetDatabase.Refresh();
                 string[] levels = {
                     "Assets/AssetsPackage/Scenes/InitScene/Init.unity",

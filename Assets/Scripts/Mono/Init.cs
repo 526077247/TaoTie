@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using YooAsset;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace TaoTie
 {
@@ -32,13 +33,13 @@ namespace TaoTie
 			if (PlayMode != EPlayMode.WebPlayMode)
 			{
 				PlayMode = EPlayMode.WebPlayMode;
-				Debug.LogError("Error PlayMode! " + PlayMode);
+				Log.InfoError("Error PlayMode! " + PlayMode);
 			}
 #else
 			if (PlayMode == EPlayMode.EditorSimulateMode || PlayMode == EPlayMode.WebPlayMode)
 			{
 				PlayMode = EPlayMode.HostPlayMode;
-				Debug.LogError("Error PlayMode! " + PlayMode);
+				Log.InfoError("Error PlayMode! " + PlayMode);
 			}	
 #endif
 #endif
@@ -46,10 +47,6 @@ namespace TaoTie
 
 			//设置时区
 			TimeInfo.Instance.TimeZone = TimeZone.CurrentTimeZone.GetUtcOffset(DateTime.Now).Hours;
-// #if ENABLE_IL2CPP
-// 			if(this.CodeMode== CodeMode.LoadDll)
-// 				this.CodeMode = CodeMode.Wolong;
-// #endif
 			System.AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
 			{
 				Log.Error(e.ExceptionObject.ToString());
@@ -62,18 +59,28 @@ namespace TaoTie
 			Log.ILog = new UnityLogger();
 
 			await PackageManager.Instance.Init(PlayMode);
-
+// #if !UNITY_EDITOR
+// 			if(this.CodeMode == CodeMode.BuildIn && !PackageManager.Instance.CdnConfig.BuildHotfixAssembliesAOT)
+// 				this.CodeMode = CodeMode.Wolong;
+// #endif
 			RegisterManager();
 
 			CodeLoader.Instance.CodeMode = this.CodeMode;
 			IsInit = true;
-
-			// CodeLoader.Instance.LoadMetadataForAOTAssembly(PlayMode);
+			
 			await CodeLoader.Instance.Start();
 		}
 
 		private void Start()
 		{
+		    var canvasScaler = GameObject.Find("Canvas").GetComponent<CanvasScaler>();
+            if (canvasScaler != null)
+            {
+                if ((float)Screen.width / Screen.height > Define.DesignScreenWidth / Define.DesignScreenHeight)
+                    canvasScaler.matchWidthOrHeight = 1;
+                else
+                    canvasScaler.matchWidthOrHeight = 0;
+            }
 			AwakeAsync().Coroutine();
 		}
 
@@ -88,7 +95,7 @@ namespace TaoTie
 				ReStart().Coroutine();
 			}
 
-			int count = WaitHelper.FrameFinishTask.Count;
+			int count = UnityLifeTimeHelper.FrameFinishTask.Count;
 			if (count > 0)
 			{
 				StartCoroutine(WaitFrameFinish());
@@ -98,10 +105,10 @@ namespace TaoTie
 		private IEnumerator WaitFrameFinish()
 		{
 			yield return waitForEndOfFrame;
-			int count = WaitHelper.FrameFinishTask.Count;
+			int count = UnityLifeTimeHelper.FrameFinishTask.Count;
 			while (count-- > 0)
 			{
-				ETTask task = WaitHelper.FrameFinishTask.Dequeue();
+				ETTask task = UnityLifeTimeHelper.FrameFinishTask.Dequeue();
 				task.SetResult();
 			}
 		}
@@ -133,11 +140,13 @@ namespace TaoTie
 		private void LateUpdate()
 		{
 			CodeLoader.Instance.LateUpdate?.Invoke();
+			ManagerProvider.LateUpdate();
 		}
 
 		private void FixedUpdate()
 		{
 			CodeLoader.Instance.FixedUpdate?.Invoke();
+			ManagerProvider.FixedUpdate();
 		}
 
 		private void OnApplicationQuit()

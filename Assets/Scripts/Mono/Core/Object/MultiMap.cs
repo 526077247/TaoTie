@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+// using Nino.Core;
 
 namespace TaoTie
 {
+    // [NinoIgnore]
     public class MultiMap<T, K>: SortedDictionary<T, List<K>>
     {
         private readonly List<K> Empty = new List<K>();
@@ -13,8 +15,7 @@ namespace TaoTie
             this.TryGetValue(t, out list);
             if (list == null)
             {
-                list = ObjectPool.Instance.Fetch(TypeInfo<List<K>>.Type) as List<K>;
-                list.Clear();
+                list = ObjectPool.Instance.Fetch<List<K>>();
                 this.Add(t, list);
             }
             list.Add(k);
@@ -82,6 +83,10 @@ namespace TaoTie
             {
                 this.TryGetValue(t, out List<K> list);
                 return list ?? Empty;
+            }
+            set
+            {
+                base[t] = value;
             }
         }
 

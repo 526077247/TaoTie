@@ -9,10 +9,12 @@ namespace TaoTie
     internal class FilterCodeAssemblies : IFilterBuildAssemblies
     {
         public int callbackOrder => 1;
-
-        public static bool buildHotfixAssembliesAOT = false;
+        
         public string[] OnFilterAssemblies(BuildOptions buildOptions, string[] assemblies)
         {
+            bool buildHotfixAssembliesAOT = false;
+            var config = Resources.Load<CDNConfig>("CDNConfig");
+            if (config != null) buildHotfixAssembliesAOT = config.BuildHotfixAssembliesAOT;
             if(buildHotfixAssembliesAOT) return assemblies;
             // 将热更dll从打包列表中移除
             return assemblies.Where(ass =>

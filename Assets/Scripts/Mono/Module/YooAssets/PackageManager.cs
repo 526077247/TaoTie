@@ -36,8 +36,8 @@ namespace TaoTie
 
         private void InitBuildInPackageVersion()
         {
-#if !UNITY_EDITOR
             BuildInPackageConfig = Resources.Load<BuildInPackageConfig>("BuildInPackageConfig");
+#if !UNITY_EDITOR
             if (BuildInPackageConfig == null) return;
             for (int i = 0; i < BuildInPackageConfig.PackageName.Count; i++)
             {
@@ -119,6 +119,10 @@ namespace TaoTie
             {
                 if (initializeParameters == null)
                 {
+                    if (CdnConfig == null)
+                    {
+                        CdnConfig = Resources.Load<CDNConfig>("CDNConfig");
+                    }
                     var buildinFileSystemParams =
                         FileSystemParameters.CreateDefaultBuildinFileSystemParameters(new FileStreamDecryption());
                     if (BuildInPackageConfig != null && BuildInPackageConfig.PackageName.Contains(packageName))
@@ -338,7 +342,7 @@ namespace TaoTie
 
         public int GetPackageVersion(string package = Define.DefaultName)
         {
-            return PlayerPrefs.GetInt("PACKAGE_VERSION_" + package, -1);
+            return UnityEngine.PlayerPrefs.GetInt("PACKAGE_VERSION_" + package, -1);
         }
     }
 }

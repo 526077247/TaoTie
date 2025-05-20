@@ -15,15 +15,16 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Reflection;
-using LitJson.Extensions;
+using TaoTie.LitJson.Extensions;
 
-namespace LitJson
+namespace TaoTie.LitJson
 {
     internal struct PropertyMetadata
     {
         public MemberInfo Info;
         public bool IsField;
         public Type Type;
+        public string Name;
     }
 
 
@@ -32,7 +33,7 @@ namespace LitJson
         private Type element_type;
         private bool is_array;
         private bool is_list;
-
+        private bool is_hashSet;
 
         public Type ElementType
         {
@@ -57,6 +58,12 @@ namespace LitJson
         {
             get { return is_list; }
             set { is_list = value; }
+        }
+        
+        public bool IsHashSet
+        {
+            get { return is_hashSet; }
+            set { is_hashSet = value; }
         }
     }
 
@@ -122,6 +129,9 @@ namespace LitJson
         private static Type ulongType = typeof(ulong);
         private static Type longType = typeof(long);
         private static Type stringType = typeof(string);
+        #if UNITY_EDITOR
+        private static Type UnityEngineObjectType = typeof(UnityEngine.Object);
+        #endif
         #endregion
         #region Fields
         private static int max_nesting_depth;
@@ -197,6 +207,12 @@ namespace LitJson
             if (type.GetInterface("System.Collections.IList") != null)
                 data.IsList = true;
 
+            if (type.GetInterface("System.Collections.Generic.ISet`1") != null)
+            {
+                data.IsHashSet = true;
+                data.ElementType = type.GetGenericArguments()[0];
+            }
+
             foreach (PropertyInfo p_info in type.GetProperties()) {
                 if (p_info.Name != "Item")
                     continue;
@@ -252,8 +268,12 @@ namespace LitJson
                 PropertyMetadata p_data = new PropertyMetadata();
                 p_data.Info = p_info;
                 p_data.Type = p_info.PropertyType;
-
-                data.Properties.Add(p_info.Name, p_data);
+                var attr = p_info.GetCustomAttributes(JsonNode.Type,false);
+                if (attr.Length > 0)
+                    p_data.Name = (attr[0] as JsonNode)?.Name;
+                else
+                    p_data.Name = p_info.Name;
+                data.Properties.Add(p_data.Name, p_data);
             }
 
             foreach (FieldInfo f_info in type.GetFields())
@@ -262,8 +282,12 @@ namespace LitJson
                 p_data.Info = f_info;
                 p_data.IsField = true;
                 p_data.Type = f_info.FieldType;
-
-                data.Properties.Add(f_info.Name, p_data);
+                var attr = f_info.GetCustomAttributes(JsonNode.Type,false);
+                if (attr.Length > 0)
+                    p_data.Name = (attr[0] as JsonNode)?.Name;
+                else
+                    p_data.Name = f_info.Name;
+                data.Properties.Add(p_data.Name, p_data);
             }
 
             lock (object_metadata_lock)
@@ -292,9 +316,16 @@ namespace LitJson
                     continue;
                 var attr = p_info.GetCustomAttributes(JsonIgnore.Type,false);
                 if(attr.Length>0)continue;
+                attr = p_info.GetCustomAttributes(typeof(NonSerializedAttribute),false);
+                if(attr.Length>0)continue;
                 PropertyMetadata p_data = new PropertyMetadata();
                 p_data.Info = p_info;
                 p_data.IsField = false;
+                attr = p_info.GetCustomAttributes(JsonNode.Type,false);
+                if (attr.Length > 0)
+                    p_data.Name = (attr[0] as JsonNode)?.Name;
+                else
+                    p_data.Name = p_info.Name;
                 props.Add(p_data);
             }
 
@@ -302,10 +333,16 @@ namespace LitJson
             {
                 var attr = f_info.GetCustomAttributes(JsonIgnore.Type,false);
                 if(attr.Length>0)continue;
+                attr = f_info.GetCustomAttributes(typeof(NonSerializedAttribute),false);
+                if(attr.Length>0)continue;
                 PropertyMetadata p_data = new PropertyMetadata();
                 p_data.Info = f_info;
                 p_data.IsField = true;
-
+                attr = f_info.GetCustomAttributes(JsonNode.Type,false);
+                if (attr.Length > 0)
+                    p_data.Name = (attr[0] as JsonNode)?.Name;
+                else
+                    p_data.Name = f_info.Name;
                 props.Add(p_data);
             }
 
@@ -434,48 +471,129 @@ namespace LitJson
                 AddArrayMetadata(inst_type);
                 ArrayMetadata t_data = array_metadata[inst_type];
 
-                if (!t_data.IsArray && !t_data.IsList)
+                if (!t_data.IsArray && !t_data.IsList && !t_data.IsHashSet)
                     throw new JsonException(String.Format(
                             "Type {0} can't act as an array",
                             inst_type));
 
-                IList list;
-                Type elem_type;
+                if (!t_data.IsHashSet)
+                {
+                    IList list;
+                    Type elem_type;
 
-                if (!t_data.IsArray)
-                {
-                    list = (IList)Activator.CreateInstance(inst_type);
-                    elem_type = t_data.ElementType;
-                }
-                else
-                {
-                    list = new ArrayList();
-                    elem_type = inst_type.GetElementType();
-                }
+                    if (!t_data.IsArray)
+                    {
+                        list = (IList)Activator.CreateInstance(inst_type);
+                        elem_type = t_data.ElementType;
+                    }
+                    else
+                    {
+                        list = new ArrayList();
+                        elem_type = inst_type.GetElementType();
+                    }
 
-                while (true)
-                {
-                    object item = ReadValue(elem_type, reader);
-                    if (item == null && reader.Token == JsonToken.ArrayEnd)
-                        break;
+                    while (true)
+                    {
+                        object item = ReadValue(elem_type, reader);
+                        if (item == null && reader.Token == JsonToken.ArrayEnd)
+                            break;
                     
-                    list.Add(item);
-                }
+                        list.Add(item);
+                    }
 
-                if (t_data.IsArray)
+                    if (t_data.IsArray)
+                    {
+                        int n = list.Count;
+                        instance = Array.CreateInstance(elem_type, n);
+
+                        for (int i = 0; i < n; i++)
+                            ((Array)instance).SetValue(list[i], i);
+                    }
+                    else
+                        instance = list;
+                }
+                else 
                 {
-                    int n = list.Count;
-                    instance = Array.CreateInstance(elem_type, n);
-
-                    for (int i = 0; i < n; i++)
-                        ((Array)instance).SetValue(list[i], i);
+                    instance = Activator.CreateInstance(inst_type);
+                    var elem_type = t_data.ElementType;
+                    var addMethod = inst_type.GetMethod("Add");
+                    object[] param = new object[1];
+                    while (true)
+                    {
+                        object item = ReadValue(elem_type, reader);
+                        if (item == null && reader.Token == JsonToken.ArrayEnd)
+                            break;
+                        param[0] = item;
+                        addMethod.Invoke(instance, param);
+                    }
                 }
-                else
-                    instance = list;
-
             }
             else if (reader.Token == JsonToken.ObjectStart)
             {
+                if (value_type.IsArray)
+                {
+                    var elem_type = value_type.GetElementType();
+                    int[] length = null;
+                    IList list = new ArrayList();
+                    while (true)
+                    {
+                        reader.Read();
+                        if (reader.Token == JsonToken.ObjectEnd)
+                            break;
+                        if ((string)reader.Value == "_Length")
+                        {
+                            length = (int[])ReadValue(typeof(int[]), reader);
+                        }
+                        else if ((string)reader.Value == "_Array")
+                        {
+                            reader.Read();//JsonToken.ArrayStart
+                            if (reader.Token == JsonToken.ArrayStart)
+                            {
+                                while (true)
+                                {
+                                    object item = ReadValue(elem_type, reader);
+                                    if (item == null && reader.Token == JsonToken.ArrayEnd)
+                                        break;
+                    
+                                    list.Add(item);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            ReadSkip(reader);
+                        }
+                    }
+                    if (length != null)
+                    {
+                        instance = Array.CreateInstance(elem_type, length);
+                        int[] index = new int[length.Length];
+                        for (int i = 0; i < list.Count; i++)
+                        {
+                            ((Array) instance).SetValue(list[i], index);
+                            bool inRange = false;
+                            for (int k = index.Length - 1; k >= 0; k--)
+                            {
+                                index[k]++;
+                                if (index[k] == length[k])
+                                {
+                                    index[k] = 0;
+                                }
+                                else
+                                {
+                                    inRange = true;
+                                    break;
+                                }
+                            }
+
+                            if (!inRange)
+                            {
+                                break;
+                            }
+                        }
+                    }
+                    return instance;
+                }
                 ObjectMetadata t_data = default;
                 while (true)
                 {
@@ -493,16 +611,77 @@ namespace LitJson
                         {
                             hasType = true;
                             string typeName = (string)ReadValue(stringType, reader);
-                            if (typeName != value_type.FullName)
+#if UNITY_EDITOR
+                            if (typeName == "_UnityEngineObject" &&
+                                UnityEngineObjectType.IsAssignableFrom(value_type))
+                            {
+                                if (UnityEditor.EditorApplication.isPlaying)
+                                {
+                                    while (true)
+                                    {
+                                        reader.Read();
+                                        if (reader.Token == JsonToken.ObjectEnd)
+                                            break;
+                                    }
+                                    return null;
+                                }
+                                string guid = null;
+                                string uType = null;
+                                while (true)
+                                {
+                                    reader.Read();
+                                    if (reader.Token == JsonToken.ObjectEnd)
+                                        break;
+                                    if ((string) reader.Value == "_ut")
+                                    {
+                                        uType = (string) ReadValue(stringType, reader);
+                                    }
+                                    else if ((string) reader.Value == "_GUID")
+                                    {
+                                        guid = (string) ReadValue(stringType, reader);
+                                    }
+                                    else
+                                    {
+                                        ReadSkip(reader);
+                                    }
+                                }
+
+                                if (!string.IsNullOrEmpty(guid) && !string.IsNullOrEmpty(uType))
+                                {
+                                    var ut = FindType(uType, value_type);
+                                    var path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
+                                    instance = UnityEditor.AssetDatabase.LoadAssetAtPath(path, ut);
+                                }
+
+                                return instance;
+                            }
+                           
+#else
+                            if (typeName == "_UnityEngineObject")
+                            {
+                                while (true)
+                                {
+                                    reader.Read();
+                                    if (reader.Token == JsonToken.ObjectEnd)
+                                        break;
+                                }
+                                return null;
+                            }
+#endif
+                            else if (typeName != value_type.FullName)
                             {
                                 var type = FindType(typeName, value_type);
                                 if (type != null)
                                 {
                                     if (!value_type.IsAssignableFrom(type))
                                     {
-                                        throw new Exception($"类型不匹配！jsontype = {type} valuetype = {value_type}");
+                                        throw new Exception($"类型不匹配！jsonType = {type} valueType = {value_type}");
                                     }
                                     value_type = type;
+                                }
+                                else
+                                {
+                                    throw new Exception($"丢失类型！{typeName}");
                                 }
                             }
                         }
@@ -897,15 +1076,33 @@ namespace LitJson
                 return;
             }
 
-            if (obj is Array)
+            if (obj is Array array)
             {
-                writer.WriteArrayStart();
+                if (array.Rank > 1)
+                {
+                    writer.WriteObjectStart();
+                    writer.WritePropertyName("_Length");
+                    writer.WriteArrayStart();
+                    for (int i = 0; i < array.Rank; i++)
+                    {
+                        WriteValue(array.GetLength(i), writer, writer_is_private, depth + 1);
+                    }
+                    writer.WriteArrayEnd();
+                    writer.WritePropertyName("_Array");
+                    writer.WriteArrayStart();
+                    foreach (object elem in array)
+                        WriteValue(elem, writer, writer_is_private, depth + 1);
+                    writer.WriteArrayEnd();
+                    writer.WriteObjectEnd();
+                }
+                else
+                {
+                    writer.WriteArrayStart();
+                    foreach (object elem in array)
+                        WriteValue(elem, writer, writer_is_private, depth + 1);
 
-                foreach (object elem in (Array)obj)
-                    WriteValue(elem, writer, writer_is_private, depth + 1);
-
-                writer.WriteArrayEnd();
-
+                    writer.WriteArrayEnd();
+                }
                 return;
             }
 
@@ -934,6 +1131,31 @@ namespace LitJson
             }
 
             Type obj_type= obj.GetType();
+            
+            if (obj_type.IsGenericType && obj_type.GetInterface("System.Collections.Generic.ISet`1") != null)
+            {
+                writer.WriteArrayStart();
+                foreach (object elem in (IEnumerable)obj)
+                    WriteValue(elem, writer, writer_is_private, depth + 1);
+                writer.WriteArrayEnd();
+
+                return;
+            }
+#if UNITY_EDITOR
+            if (UnityEngineObjectType.IsAssignableFrom(obj_type) && 
+                UnityEditor.AssetDatabase.TryGetGUIDAndLocalFileIdentifier(obj as UnityEngine.Object, out string guid,out long localId))
+            {
+                writer.WriteObjectStart();
+                writer.WritePropertyName("_t");
+                writer.Write("_UnityEngineObject");
+                writer.WritePropertyName("_ut");
+                writer.Write(obj_type.FullName);
+                writer.WritePropertyName("_GUID");
+                writer.Write(guid);
+                writer.WriteObjectEnd();
+                return;
+            }
+#endif
 
             // See if there's a custom exporter for the object
             if (custom_exporters_table.ContainsKey(obj_type))
@@ -958,10 +1180,20 @@ namespace LitJson
             {
                 Type e_type = Enum.GetUnderlyingType(obj_type);
 
-                if (e_type == longType
-                    || e_type == uintType
-                    || e_type == ulongType)
+                if (e_type == longType)
+                    writer.Write((long)obj);
+                else if(e_type == ulongType)
                     writer.Write((ulong)obj);
+                else if (e_type == byteType)
+                    writer.Write((byte)obj);
+                else if(e_type == sbyteType)
+                    writer.Write((sbyte)obj);
+                else if (e_type == shortType)
+                    writer.Write((short)obj);
+                else if(e_type == ushortType)
+                    writer.Write((ushort)obj);
+                else if(e_type == uintType)
+                    writer.Write((uint)obj);
                 else
                     writer.Write((int)obj);
 
@@ -980,9 +1212,10 @@ namespace LitJson
             {
                 if (p_data.IsField)
                 {
-                    writer.WritePropertyName(p_data.Info.Name);
-                    WriteValue(((FieldInfo)p_data.Info).GetValue(obj),
-                                writer, writer_is_private, depth + 1);
+                    var value = ((FieldInfo) p_data.Info).GetValue(obj);
+                    if(value == default) continue;
+                    writer.WritePropertyName(p_data.Name);
+                    WriteValue(value, writer, writer_is_private, depth + 1);
                 }
                 else
                 {
@@ -990,9 +1223,10 @@ namespace LitJson
 
                     if (p_info.CanRead)
                     {
-                        writer.WritePropertyName(p_data.Info.Name);
-                        WriteValue(p_info.GetValue(obj, null),
-                                    writer, writer_is_private, depth + 1);
+                        var value = p_info.GetValue(obj, null);
+                        if(value==default) continue;
+                        writer.WritePropertyName(p_data.Name);
+                        WriteValue(value, writer, writer_is_private, depth + 1);
                     }
                 }
             }
@@ -1001,7 +1235,7 @@ namespace LitJson
         #endregion
 
 
-        public static string ToJson(object obj)
+        public static string ToJson<T>(T obj) where T :class
         {
             if (obj == null) return "null";
             lock (static_writer_lock)

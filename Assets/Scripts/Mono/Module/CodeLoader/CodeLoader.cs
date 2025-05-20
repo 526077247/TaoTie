@@ -20,6 +20,7 @@ namespace TaoTie
 		public Action OnApplicationQuit;
 		public Action<bool> OnApplicationFocus;
 
+		private bool loadAOT = false;
 		private int assemblyVer;
 		private Assembly assembly;
 
@@ -57,23 +58,12 @@ namespace TaoTie
 		/// 为aot assembly加载原始metadata， 这个代码放aot或者热更新都行。
 		/// 一旦加载后，如果AOT泛型函数对应native实现不存在，则自动替换为解释模式执行
 		/// </summary>
-// 		public void LoadMetadataForAOTAssembly(YooAsset.EPlayMode mode)
-// 		{
-// 			if(this.CodeMode != CodeMode.Wolong) return;
+		public async ETTask LoadMetadataForAOTAssembly(EPlayMode mode)
+		{
+			if(loadAOT) return;
+// 			if(this.CodeMode != CodeMode.Wolong && this.CodeMode != CodeMode.LoadFromUrl) return;
 // 			// 注意，补充元数据是给AOT dll补充元数据，而不是给热更新dll补充元数据。
 // 			// 热更新dll不缺元数据，不需要补充，如果调用LoadMetadataForAOTAssembly会返回错误
-// // 			optionBytes = null;
-// // 			if (mode != YooAsset.EPlayMode.EditorSimulateMode)
-// // 			{
-// // 				var op = YooAssets.LoadAssetSync($"{Define.AOTDir}Unity.Codes.dhao.bytes", TypeInfo<TextAsset>.Type);
-// // 				TextAsset v = op.AssetObject as TextAsset;
-// // 				optionBytes = v.bytes;
-// // 				op.Release();
-// // 			}
-// // #if UNITY_EDITOR
-// // 			else
-// // 				optionBytes = (AssetDatabase.LoadAssetAtPath($"{Define.AOTDir}Unity.Codes.dhao.bytes", TypeInfo<TextAsset>.Type) as TextAsset)?.bytes;
-// // #endif
 // 			foreach (var aotDllName in AllAotDllList)
 // 			{
 // 				byte[] dllBytes = null;
@@ -81,7 +71,8 @@ namespace TaoTie
 // 				if (mode != YooAsset.EPlayMode.EditorSimulateMode)
 // #endif
 // 				{
-// 					var op = YooAssetsMgr.Instance.LoadAssetSync<TextAsset>($"{Define.AOTLoadDir}{aotDllName}.bytes",YooAssetsMgr.DefaultName);
+// 					var op = PackageManager.Instance.LoadAssetAsync<TextAsset>($"{Define.AOTLoadDir}{aotDllName}.bytes",Define.DefaultName);
+// 					await op.Task;
 // 					TextAsset v = op.AssetObject as TextAsset;
 // 					dllBytes = v.bytes;
 // 					op.Release();
@@ -94,11 +85,11 @@ namespace TaoTie
 // 				var err = RuntimeApi.LoadMetadataForAOTAssembly(dllBytes,HomologousImageMode.SuperSet);
 // 				Log.Info($"LoadMetadataForAOTAssembly:{aotDllName}. ret:{err}");
 // 			}
-//
-// 		}
+			loadAOT = true;
+		}
 		public async ETTask Start()
 		{
-			if ((Define.Debug || Debug.isDebugBuild) && PlayerPrefs.GetInt("DEBUG_LoadFromUrl", 0) == 1)
+			if ((Define.Debug || Debug.isDebugBuild) && UnityEngine.PlayerPrefs.GetInt("DEBUG_LoadFromUrl", 0) == 1)
 			{
 				CodeMode = CodeMode.LoadFromUrl;
 			}
@@ -133,6 +124,7 @@ namespace TaoTie
 					if (this.assemblyVer != version) //dll版本不同
 					{
 						assembly = null;
+#if !UNITY_EDITOR
 						//和内置包版本一致，检查是否有可用AOT代码
 						if (PackageManager.Instance.CdnConfig.BuildHotfixAssembliesAOT &&
 						    PackageManager.Instance.BuildInPackageConfig.GetBuildInPackageVersion(Define.DefaultName)
@@ -148,11 +140,13 @@ namespace TaoTie
 								}
 							}
 						}
+#endif
 					}
 
 					//没有内置AOTdll，或者热更完dll版本不同
 					if (this.assembly == null)
 					{
+						await LoadMetadataForAOTAssembly(PackageManager.Instance.PlayMode);
 						(assBytes, pdbBytes) = await GetBytes();
 						if (assBytes != null)
 						{
@@ -171,7 +165,7 @@ namespace TaoTie
 				case CodeMode.LoadFromUrl:
 				{
 					int version = PackageManager.Instance.Config.GetPackageMaxVersion(Define.DefaultName);
-					var path = PlayerPrefs.GetString("DEBUG_LoadFromUrlPath", "http://127.0.0.1:8081/cdn/");
+					var path = UnityEngine.PlayerPrefs.GetString("DEBUG_LoadFromUrlPath", "http://127.0.0.1:8081/cdn/");
 					path += $"Code{version}.dll.bytes";
 
 					UnityWebRequest www = UnityWebRequest.Get(path);
@@ -181,6 +175,7 @@ namespace TaoTie
 					await task;
 					if (www.result == UnityWebRequest.Result.Success)
 					{
+						await LoadMetadataForAOTAssembly(PackageManager.Instance.PlayMode);
 						assembly = Assembly.Load(www.downloadHandler.data);
 					}
 					else

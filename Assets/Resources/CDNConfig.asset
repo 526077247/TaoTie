@@ -17,4 +17,4 @@ MonoBehaviour:
   FallbackHostServer: http://127.0.0.1:8081/cdn
   UpdateListUrl: http://127.0.0.1:8081/cdn
   TestUpdateListUrl: http://127.0.0.1:8081/cdn
-  BuildHotfixAssembliesAOT: 1
+  BuildHotfixAssembliesAOT: 0

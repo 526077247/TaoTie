@@ -20,7 +20,8 @@ namespace TaoTie
             Instance = null;
         }
 
-        readonly Dictionary<long, MultiMapSet<int, MulticastDelegate>> evtGroup = new();
+        readonly Dictionary<long, MultiMapSet<int, MulticastDelegate>> evtGroup = 
+            new Dictionary<long, MultiMapSet<int, MulticastDelegate>>();
 
         #region 注册
 
@@ -147,8 +148,9 @@ namespace TaoTie
                 if (evts.TryGetValue(name, out var evt))
                 {
                     using var list = ToList(evt);
-                    foreach (var item in list)
+                    for (int i = 0; i < list.Count; i++)
                     {
+                        var item = list[i];
                         (item as Action)?.Invoke();
                     }
                 }
@@ -162,17 +164,19 @@ namespace TaoTie
                 if (evts.TryGetValue(name, out var evt))
                 {
                     using var list = ToList(evt);
-                    foreach (var item in list)
+                    for (int i = 0; i < list.Count; i++)
                     {
+                        var item = list[i];
                         if (item is Action<P1> action)
                         {
                             action.Invoke(p1);
                         }
-                        else //多态支持例子
+                        else //多态支持
                         {
                             var param = item.GetMethodInfo().GetParameters();
-                            if (param.Length == 1 && param[0].ParameterType.IsAssignableFrom(TypeInfo<P1>.Type))
-                                item.DynamicInvoke(p1);
+                            if (param.Length != 1) return;
+                            if (p1 != null && !param[0].ParameterType.IsInstanceOfType(p1)) return;
+                            item.DynamicInvoke(p1);
                         }
                     }
                 }
@@ -186,9 +190,21 @@ namespace TaoTie
                 if (evts.TryGetValue(name, out var evt))
                 {
                     using var list = ToList(evt);
-                    foreach (var item in list)
+                    for (int i = 0; i < list.Count; i++)
                     {
-                        (item as Action<P1, P2>)?.Invoke(p1, p2);
+                        var item = list[i];
+                        if (item is Action<P1, P2> action)
+                        {
+                            action.Invoke(p1, p2);
+                        }
+                        else //多态支持
+                        {
+                            var param = item.GetMethodInfo().GetParameters();
+                            if (param.Length != 2) return;
+                            if (p1!=null && !param[0].ParameterType.IsInstanceOfType(p1)) return;
+                            if (p2!=null && !param[1].ParameterType.IsInstanceOfType(p2)) return;
+                            item.DynamicInvoke(p1, p2);
+                        }
                     }
                 }
             }
@@ -201,9 +217,22 @@ namespace TaoTie
                 if (evts.TryGetValue(name, out var evt))
                 {
                     using var list = ToList(evt);
-                    foreach (var item in list)
+                    for (int i = 0; i < list.Count; i++)
                     {
-                        (item as Action<P1, P2, P3>)?.Invoke(p1, p2, p3);
+                        var item = list[i];
+                        if (item is Action<P1, P2, P3> action)
+                        {
+                            action.Invoke(p1, p2, p3);
+                        }
+                        else //多态支持
+                        {
+                            var param = item.GetMethodInfo().GetParameters();
+                            if (param.Length != 3) return;
+                            if (p1!=null && !param[0].ParameterType.IsInstanceOfType(p1)) return;
+                            if (p2!=null && !param[1].ParameterType.IsInstanceOfType(p2)) return;
+                            if (p3!=null && !param[2].ParameterType.IsInstanceOfType(p3)) return;
+                            item.DynamicInvoke(p1, p2, p3);
+                        }
                     }
                 }
             }
@@ -216,9 +245,23 @@ namespace TaoTie
                 if (evts.TryGetValue(name, out var evt))
                 {
                     using var list = ToList(evt);
-                    foreach (var item in list)
+                    for (int i = 0; i < list.Count; i++)
                     {
-                        (item as Action<P1, P2, P3, P4>)?.Invoke(p1, p2, p3, p4);
+                        var item = list[i];
+                        if (item is Action<P1, P2, P3, P4> action)
+                        {
+                            action.Invoke(p1, p2, p3, p4);
+                        }
+                        else //多态支持
+                        {
+                            var param = item.GetMethodInfo().GetParameters();
+                            if (param.Length != 4) return;
+                            if (p1!=null && !param[0].ParameterType.IsInstanceOfType(p1)) return;
+                            if (p2!=null && !param[1].ParameterType.IsInstanceOfType(p2)) return;
+                            if (p3!=null && !param[2].ParameterType.IsInstanceOfType(p3)) return;
+                            if (p4!=null && !param[3].ParameterType.IsInstanceOfType(p4)) return;
+                            item.DynamicInvoke(p1, p2, p3, p4);
+                        }
                     }
                 }
             }
@@ -231,9 +274,24 @@ namespace TaoTie
                 if (evts.TryGetValue(name, out var evt))
                 {
                     using var list = ToList(evt);
-                    foreach (var item in list)
+                    for (int i = 0; i < list.Count; i++)
                     {
-                        (item as Action<P1, P2, P3, P4, P5>)?.Invoke(p1, p2, p3, p4, p5);
+                        var item = list[i];
+                        if (item is Action<P1, P2, P3, P4, P5> action)
+                        {
+                            action.Invoke(p1, p2, p3, p4, p5);
+                        }
+                        else //多态支持
+                        {
+                            var param = item.GetMethodInfo().GetParameters();
+                            if (param.Length != 5) return;
+                            if (p1!=null && !param[0].ParameterType.IsInstanceOfType(p1)) return;
+                            if (p2!=null && !param[1].ParameterType.IsInstanceOfType(p2)) return;
+                            if (p3!=null && !param[2].ParameterType.IsInstanceOfType(p3)) return;
+                            if (p4!=null && !param[3].ParameterType.IsInstanceOfType(p4)) return;
+                            if (p5!=null && !param[4].ParameterType.IsInstanceOfType(p5)) return;
+                            item.DynamicInvoke(p1, p2, p3, p4, p5);
+                        }
                     }
                 }
             }
@@ -252,8 +310,9 @@ namespace TaoTie
                     await TimerManager.Instance.WaitAsync(1);
 
                     using var list = ToList(evt);
-                    foreach (var item in list)
+                    for (int i = 0; i < list.Count; i++)
                     {
+                        var item = list[i];
                         (item as Action)?.Invoke();
                     }
                 }
@@ -268,8 +327,9 @@ namespace TaoTie
                 {
                     await TimerManager.Instance.WaitAsync(1);
                     using var list = ToList(evt);
-                    foreach (var item in list)
+                    for (int i = 0; i < list.Count; i++)
                     {
+                        var item = list[i];
                         if (item is Action<P1> action)
                         {
                             action.Invoke(p1);
@@ -277,8 +337,9 @@ namespace TaoTie
                         else //多态支持
                         {
                             var param = item.GetMethodInfo().GetParameters();
-                            if (param.Length == 1 && param[0].ParameterType.IsAssignableFrom(TypeInfo<P1>.Type))
-                                item.DynamicInvoke(p1);
+                            if (param.Length != 1) return;
+                            if (p1 != null && !param[0].ParameterType.IsInstanceOfType(p1)) return;
+                            item.DynamicInvoke(p1);
                         }
                     }
                 }
@@ -293,9 +354,21 @@ namespace TaoTie
                 {
                     await TimerManager.Instance.WaitAsync(1);
                     using var list = ToList(evt);
-                    foreach (var item in list)
+                    for (int i = 0; i < list.Count; i++)
                     {
-                        (item as Action<P1, P2>)?.Invoke(p1, p2);
+                        var item = list[i];
+                        if (item is Action<P1, P2> action)
+                        {
+                            action.Invoke(p1, p2);
+                        }
+                        else //多态支持
+                        {
+                            var param = item.GetMethodInfo().GetParameters();
+                            if (param.Length != 2) return;
+                            if (p1!=null && !param[0].ParameterType.IsInstanceOfType(p1)) return;
+                            if (p2!=null && !param[1].ParameterType.IsInstanceOfType(p2)) return;
+                            item.DynamicInvoke(p1, p2);
+                        }
                     }
                 }
             }
@@ -309,9 +382,22 @@ namespace TaoTie
                 {
                     await TimerManager.Instance.WaitAsync(1);
                     using var list = ToList(evt);
-                    foreach (var item in list)
+                    for (int i = 0; i < list.Count; i++)
                     {
-                        (item as Action<P1, P2, P3>)?.Invoke(p1, p2, p3);
+                        var item = list[i];
+                        if (item is Action<P1, P2, P3> action)
+                        {
+                            action.Invoke(p1, p2, p3);
+                        }
+                        else //多态支持
+                        {
+                            var param = item.GetMethodInfo().GetParameters();
+                            if (param.Length != 3) return;
+                            if (p1!=null && !param[0].ParameterType.IsInstanceOfType(p1)) return;
+                            if (p2!=null && !param[1].ParameterType.IsInstanceOfType(p2)) return;
+                            if (p3!=null && !param[2].ParameterType.IsInstanceOfType(p3)) return;
+                            item.DynamicInvoke(p1, p2, p3);
+                        }
                     }
                 }
             }
@@ -325,9 +411,23 @@ namespace TaoTie
                 {
                     await TimerManager.Instance.WaitAsync(1);
                     using var list = ToList(evt);
-                    foreach (var item in list)
+                    for (int i = 0; i < list.Count; i++)
                     {
-                        (item as Action<P1, P2, P3, P4>)?.Invoke(p1, p2, p3, p4);
+                        var item = list[i];
+                        if (item is Action<P1, P2, P3, P4> action)
+                        {
+                            action.Invoke(p1, p2, p3, p4);
+                        }
+                        else //多态支持
+                        {
+                            var param = item.GetMethodInfo().GetParameters();
+                            if (param.Length != 4) return;
+                            if (p1!=null && !param[0].ParameterType.IsInstanceOfType(p1)) return;
+                            if (p2!=null && !param[1].ParameterType.IsInstanceOfType(p2)) return;
+                            if (p3!=null && !param[2].ParameterType.IsInstanceOfType(p3)) return;
+                            if (p4!=null && !param[3].ParameterType.IsInstanceOfType(p4)) return;
+                            item.DynamicInvoke(p1, p2, p3, p4);
+                        }
                     }
                 }
             }
@@ -341,9 +441,24 @@ namespace TaoTie
                 {
                     await TimerManager.Instance.WaitAsync(1);
                     using var list = ToList(evt);
-                    foreach (var item in list)
+                    for (int i = 0; i < list.Count; i++)
                     {
-                        (item as Action<P1, P2, P3, P4, P5>)?.Invoke(p1, p2, p3, p4, p5);
+                        var item = list[i];
+                        if (item is Action<P1, P2, P3, P4, P5> action)
+                        {
+                            action.Invoke(p1, p2, p3, p4, p5);
+                        }
+                        else //多态支持
+                        {
+                            var param = item.GetMethodInfo().GetParameters();
+                            if (param.Length != 5) return;
+                            if (p1!=null && !param[0].ParameterType.IsInstanceOfType(p1)) return;
+                            if (p2!=null && !param[1].ParameterType.IsInstanceOfType(p2)) return;
+                            if (p3!=null && !param[2].ParameterType.IsInstanceOfType(p3)) return;
+                            if (p4!=null && !param[3].ParameterType.IsInstanceOfType(p4)) return;
+                            if (p5!=null && !param[4].ParameterType.IsInstanceOfType(p5)) return;
+                            item.DynamicInvoke(p1, p2, p3, p4, p5);
+                        }
                     }
                 }
             }

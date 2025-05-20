@@ -515,10 +515,6 @@ namespace TaoTie
                 sb.Append($"\t\t/// <summary>{headInfo.FieldDesc.Replace("\n", "</summary>\n\t\t/// <summary> ")}</summary>\n");
                 sb.Append($"\t\t[NinoMember({headInfo.FieldIndex})]\n");
                 string fieldType = headInfo.FieldType;
-                if (fieldType == "int[][]")
-                {
-                    fieldType = "string[]";
-                }
 
                 sb.Append($"\t\tpublic {fieldType} {headInfo.FieldName} {{ get; set; }}\n");
             }
@@ -644,6 +640,7 @@ namespace TaoTie
                 case "int[]":
                 case "int32[]":
                 case "long[]":
+                case "ulong[]":
                 case "float[]":
                     {
                         value = value.Replace("{", "").Replace("}", "");
@@ -686,7 +683,8 @@ namespace TaoTie
                     string[] ss = value.Split(':');
                     return "{\"_t\":\"AttrConfig\"," + "\"Ks\":" + ss[0] + ",\"Vs\":" + ss[1] + "}";
                 default:
-                    throw new Exception($"不支持此类型: {type}");
+                    Console.WriteLine($"不支持此类型: {type}");
+                    return $"\"{value}\"";
             }
         }
 
@@ -704,7 +702,6 @@ namespace TaoTie
 
             Assembly ass = GetAssembly(configType);
             Type type = ass.GetType($"TaoTie.{protoName}Category");
-
             IMerge final = Activator.CreateInstance(type) as IMerge;
 
             string p = Path.Combine(string.Format(jsonDir, configType, relativeDir));

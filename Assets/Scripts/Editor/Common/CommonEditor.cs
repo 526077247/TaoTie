@@ -29,5 +29,19 @@ namespace TaoTie
             AssetDatabase.Refresh();
         }
         
+        [MenuItem("Tools/帮助/测试")]
+        static void Test()
+        {
+            var guids = AssetDatabase.FindAssets("t:Model", new[] {"Assets/Fox"});
+            for (int i = 0; i < guids.Length; i++)
+            {
+                var path = AssetDatabase.GUIDToAssetPath(guids[i]);
+                var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(path);
+                var newAnimationClip = Object.Instantiate(clip);
+                AssetDatabase.CreateAsset(newAnimationClip,"Assets/AssetsPackage/Unit/Fox/Animations/"+Path.GetFileNameWithoutExtension(path)+".anim");
+                
+            }
+        }
+
     }
 }

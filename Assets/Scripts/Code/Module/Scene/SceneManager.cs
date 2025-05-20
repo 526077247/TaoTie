@@ -9,16 +9,22 @@ namespace TaoTie
     /// 注意：
     /// 资源预加载放各个场景类中自行控制
     /// </summary>
-    public class SceneManager:IManager
+    public class SceneManager : IManager
     {
-        public static SceneManager Instance{ get; private set; }
-        
-        //当前场景
-        public IScene CurrentScene{ get; private set; }
-        //是否忙
+        public static SceneManager Instance { get; private set; }
+
+        /// <summary>
+        /// 当前场景
+        /// </summary>
+        public IScene CurrentScene { get; private set; }
+
+        /// <summary>
+        /// 是否正在加载
+        /// </summary>
         public bool Busing { get; private set; } = false;
-        
+
         private readonly Queue<ETTask> waitFinishTask = new Queue<ETTask>();
+
         #region override
 
         public void Init()
@@ -34,14 +40,14 @@ namespace TaoTie
 
         #endregion
 
-        async ETTask<IScene> GetScene<T>() where T : class,IScene
+        async ETTask<IScene> GetScene<T>() where T : class, IScene
         {
             var res = ObjectPool.Instance.Fetch<T>();
             await res.OnCreate();
             return res;
         }
-        //切换场景
-        async ETTask InnerSwitchScene<T>(bool needClean = false,int id = 0) where T:class,IScene
+        
+        async ETTask InnerSwitchScene<T>(bool needClean = false, int id = 0, List<string> ignoreClean = null) where T : class, IScene
         {
             float slidValue = 0;
             Log.Info("InnerSwitchScene start open uiLoading");
@@ -51,6 +57,13 @@ namespace TaoTie
                 await CurrentScene.OnLeave();
                 ObjectPool.Instance.Recycle(CurrentScene);
             }
+
+            scene.GetProgressPercent(out float cleanup, out float loadScene, out float prepare);
+            float total = cleanup + loadScene + prepare;
+            cleanup /= total * 0.9f;
+            loadScene /= total * 0.9f;
+            prepare /= total * 0.9f;
+
             await scene.OnEnter();
             await scene.SetProgress(slidValue);
 
@@ -62,6 +75,7 @@ namespace TaoTie
             {
                 await TimerManager.Instance.WaitAsync(1);
             }
+
             slidValue += 0.01f;
             await scene.SetProgress(slidValue);
             await TimerManager.Instance.WaitAsync(1);
@@ -69,7 +83,7 @@ namespace TaoTie
             //清理UI
             Log.Info("InnerSwitchScene Clean UI");
             await UIManager.Instance.DestroyWindowExceptNames(scene.GetDontDestroyWindow());
-            
+
             slidValue += 0.01f;
             await scene.SetProgress(slidValue);
             //清除ImageLoaderManager里的资源缓存 这里考虑到我们是单场景
@@ -77,26 +91,17 @@ namespace TaoTie
             ImageLoaderManager.Instance.Clear();
             //清除预设以及其创建出来的gameObject, 这里不能清除loading的资源
             Log.Info("InnerSwitchScene GameObjectPool Cleanup");
-            if (needClean && CurrentScene != null)
+            if (needClean)
             {
-                GameObjectPoolManager.GetInstance().Cleanup(true, CurrentScene.GetScenesChangeIgnoreClean());
-                slidValue += 0.01f;
-                await scene.SetProgress(slidValue);
-                //清除除loading外的资源缓存 
-                using (ListComponent<UnityEngine.Object> gos = ListComponent<UnityEngine.Object>.Create())
+                using (ListComponent<string> ignorePathArray = ListComponent<string>.Create())
                 {
-                    for (int i = 0; i < CurrentScene.GetScenesChangeIgnoreClean().Count; i++)
-                    {
-                        var path = CurrentScene.GetScenesChangeIgnoreClean()[i];
-                        var go = GameObjectPoolManager.GetInstance().GetCachedGoWithPath(path);
-                        if (go != null)
-                        {
-                            gos.Add(go);
-                        }
-                    }
-                    Log.Info("InnerSwitchScene ResourcesManager ClearAssetsCache excludeAssetLen = " + gos.Count);
-                    ResourcesManager.Instance.ClearAssetsCache(gos);
+                    if (ignoreClean != null) ignorePathArray.AddRange(ignoreClean);
+                    ignorePathArray.Add(UIToastManager.PrefabPath);
+                    GameObjectPoolManager.GetInstance().Cleanup(true, ignorePathArray);
+                    slidValue += 0.01f;
+                    await scene.SetProgress(slidValue);
                 }
+
                 await PackageManager.Instance.UnloadUnusedAssets(Define.DefaultName);
                 slidValue += 0.01f;
                 await scene.SetProgress(slidValue);
@@ -121,19 +126,20 @@ namespace TaoTie
             {
                 await TimerManager.Instance.WaitAsync(1);
             }
-            slidValue += 0.12f;
+
+            slidValue += cleanup;
             await scene.SetProgress(slidValue);
 
             Log.Info("异步加载目标场景 Start");
             //异步加载目标场景
             await ResourcesManager.Instance.LoadSceneAsync(scene.GetScenePath(), false);
             await scene.OnComplete();
-            slidValue += 0.65f;
+            slidValue += loadScene;
             await scene.SetProgress(slidValue);
             //准备工作：预加载资源等
-            await scene.OnPrepare();
+            await scene.OnPrepare(slidValue, slidValue + prepare);
 
-            slidValue += 0.15f;
+            slidValue += prepare;
             await scene.SetProgress(slidValue);
             CameraManager.Instance.SetCameraStackAtLoadingDone();
 
@@ -147,46 +153,55 @@ namespace TaoTie
             await scene.OnSwitchSceneEnd();
             FinishLoad();
         }
-        //切换场景
-        public async ETTask SwitchScene<T>(bool needClean = false)where T:class,IScene
+
+        /// <summary>
+        /// 切换场景
+        /// </summary>
+        /// <param name="needClean"></param>
+        /// <typeparam name="T"></typeparam>
+        public async ETTask SwitchScene<T>(bool needClean = true) where T : class, IScene
         {
-            if (this.Busing) return;
+            if (Busing) return;
             if (IsInTargetScene<T>())
                 return;
-            this.Busing = true;
-
-            await this.InnerSwitchScene<T>(needClean);
+            Busing = true;
+            var ignoreClean = CurrentScene?.GetScenesChangeIgnoreClean();
+            await InnerSwitchScene<T>(needClean, ignoreClean:ignoreClean);
 
             //释放loading界面引用的资源
-            GameObjectPoolManager.GetInstance().CleanupWithPathArray(true, CurrentScene.GetScenesChangeIgnoreClean());
-            this.Busing = false;
+            GameObjectPoolManager.GetInstance().CleanupWithPathArray(ignoreClean);
+            Busing = false;
         }
-        
+
         public IScene GetCurrentScene()
         {
-            return this.CurrentScene;
+            return CurrentScene;
         }
-        public T GetCurrentScene<T>() where T:IScene
+
+        public T GetCurrentScene<T>() where T : IScene
         {
-            return (T)this.CurrentScene;
+            return (T) CurrentScene;
         }
-        public bool IsInTargetScene<T>() where T:IScene
+
+        public bool IsInTargetScene<T>() where T : IScene
         {
-            if (this.CurrentScene == null) return false;
-            return this.CurrentScene is T;
+            if (CurrentScene == null) return false;
+            return CurrentScene is T;
         }
+
         public bool IsInTargetMapScene(string name)
         {
-            if (this.CurrentScene == null) return false;
-            return this.CurrentScene.GetName() == name;
+            if (CurrentScene == null) return false;
+            return CurrentScene.GetName() == name;
         }
+
         public ETTask WaitLoadOver()
         {
             ETTask task = ETTask.Create();
             waitFinishTask.Enqueue(task);
             return task;
         }
-        
+
         public void FinishLoad()
         {
             int count = waitFinishTask.Count;
@@ -196,6 +211,6 @@ namespace TaoTie
                 task.SetResult();
             }
         }
-        
+
     }
 }
