@@ -19,7 +19,7 @@ namespace TaoTie
 
         const string relativeDirPrefix = "Release";
 
-        private static string[] ignoreFile = new[] {"BuildReport_"};
+        private static string[] ignoreFile = new[] {"BuildReport_", ".report", "link.xml", ".json", ".version"};
 
         public static readonly Dictionary<PlatformType, BuildTarget> buildmap =
             new Dictionary<PlatformType, BuildTarget>(PlatformTypeComparer.Instance)
@@ -201,15 +201,7 @@ namespace TaoTie
 
             string fold = $"{AssetBundleBuilderHelper.GetDefaultBuildOutputRoot()}/{buildTarget}";
             var config = Resources.Load<CDNConfig>("CDNConfig");
-            var rename = "common";
-            for (int i = 0; i < Define.RenameList.Length; i++)
-            {
-                if (Define.RenameList[i] == config.Channel)
-                {
-                    rename = config.Channel;
-                    break;
-                }
-            }
+            var rename = config.GetChannel();
             string targetPath = Path.Combine(relativeDirPrefix, $"{rename}_{platform}");
             if (!Directory.Exists(targetPath)) Directory.CreateDirectory(targetPath);
             FileHelper.CleanDirectory(targetPath);
@@ -457,15 +449,7 @@ namespace TaoTie
             
             string fold = $"{AssetBundleBuilderHelper.GetDefaultBuildOutputRoot()}/{buildTarget}";
             var config = Resources.Load<CDNConfig>("CDNConfig");
-            var rename = "common";
-            for (int i = 0; i < Define.RenameList.Length; i++)
-            {
-                if (Define.RenameList[i] == config.Channel)
-                {
-                    rename = config.Channel;
-                    break;
-                }
-            }
+            var rename = config.GetChannel();
             string targetPath = Path.Combine(relativeDirPrefix, $"{rename}_{platform}");
 
             if (!Directory.Exists(targetPath)) Directory.CreateDirectory(targetPath);
@@ -498,16 +482,7 @@ namespace TaoTie
         public static void PrintFile()
         {
             var config = Resources.Load<CDNConfig>("CDNConfig");
-            var rename = "common";
-            for (int i = 0; i < Define.RenameList.Length; i++)
-            {
-                if (Define.RenameList[i] == config.Channel)
-                {
-                    rename = config.Channel;
-                    break;
-                }
-            }
-
+            var rename = config.GetChannel();
             string platform = "pc";
 #if UNITY_ANDROID
             platform = "android";
