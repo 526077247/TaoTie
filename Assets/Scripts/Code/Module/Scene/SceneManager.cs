@@ -60,9 +60,9 @@ namespace TaoTie
 
             scene.GetProgressPercent(out float cleanup, out float loadScene, out float prepare);
             float total = cleanup + loadScene + prepare;
-            cleanup /= total * 0.9f;
-            loadScene /= total * 0.9f;
-            prepare /= total * 0.9f;
+            cleanup = cleanup /total * 0.9f;
+            loadScene =  loadScene /total * 0.9f;
+            prepare = prepare /total * 0.9f;
 
             await scene.OnEnter();
             await scene.SetProgress(slidValue);
@@ -202,7 +202,7 @@ namespace TaoTie
             return task;
         }
 
-        public void FinishLoad()
+        private void FinishLoad()
         {
             int count = waitFinishTask.Count;
             while (count-- > 0)
