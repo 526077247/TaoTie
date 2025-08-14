@@ -134,6 +134,7 @@ namespace TaoTie
 
 		private void RegisterManager()
 		{
+			ManagerProvider.RegisterManager<PerformanceManager>();
 			ManagerProvider.RegisterManager<AssemblyManager>();
 		}
 
@@ -170,7 +171,6 @@ namespace TaoTie
 			Input.multiTouchEnabled = false;
 			//设置帧率
 			QualitySettings.vSyncCount = 0;
-			Application.targetFrameRate = 60;
 			Application.runInBackground = true;
 		}
 	}
