@@ -418,6 +418,9 @@ namespace TaoTie
 
             if(isBuildExe)
             {
+#if UNITY_WEBGL
+                PlayerSettings.WebGL.template = $"PROJECT:TaoTie";
+#endif
                 AssetDatabase.Refresh();
                 string[] levels = {
                     "Assets/AssetsPackage/Scenes/InitScene/Init.unity",
