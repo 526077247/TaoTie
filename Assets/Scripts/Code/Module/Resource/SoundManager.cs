@@ -478,7 +478,7 @@ namespace TaoTie
             await PoolPlay(res, res.Token);
         }
 
-        public void StopSound(long id)
+        public void StopSound(ref long id)
         {
             var old = Get(id);
             if (old != null)
@@ -487,6 +487,7 @@ namespace TaoTie
                 sounds.Remove(id);
                 ClearMemory();
             }
+            id = 0;
         }
 
         public void StopAllSound()
