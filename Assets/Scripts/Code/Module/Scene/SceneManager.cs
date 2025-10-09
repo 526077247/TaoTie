@@ -158,11 +158,6 @@ namespace TaoTie
             var scene = await GetScene<T>();
             ResourcesManager.Instance.PreLoadScene(scene.GetScenePath(), false);
         }
-        public void PreloadMapScene(string typeName)
-        {
-            if(!SceneConfigCategory.Instance.TryGetByName(typeName,out var config)) return;
-            ResourcesManager.Instance.PreLoadScene(config.Perfab, false);
-        }
         /// <summary>
         /// 切换场景
         /// </summary>

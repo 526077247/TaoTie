@@ -1282,7 +1282,21 @@ namespace TaoTie
             rectTrans.offsetMin = new Vector2(padding * (1 - rectTrans.anchorMin.x), bottom * rectTrans.anchorMax.y);
             rectTrans.offsetMax = new Vector2(-padding * rectTrans.anchorMax.x, -top * (1 - rectTrans.anchorMin.y));
         }
-
+        
+        private readonly Vector2 hidePos = new Vector2(9999, 9999);
+        public Vector2 ScreenPointToUILocalPoint(RectTransform parentRT, Vector2 screenPoint)
+        {
+            var camera = UICamera;
+            if (PlatformUtil.IsWebGl1())
+            {
+                camera = null;
+            }
+            if (RectTransformUtility.ScreenPointToLocalPointInRectangle(parentRT, screenPoint, camera, out Vector2 localPos))
+            {
+                return localPos;
+            }
+            return hidePos;
+        }
         #endregion
     }
 }
