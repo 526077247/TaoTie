@@ -36,8 +36,6 @@ namespace TaoTie
                 
                 ManagerProvider.RegisterManager<I18NManager>();
                 ManagerProvider.RegisterManager<UIManager>();
-                ManagerProvider.RegisterManager<UIMsgBoxManager>();
-                ManagerProvider.RegisterManager<UIToastManager>();
 
                 ManagerProvider.RegisterManager<CameraManager>();
                 ManagerProvider.RegisterManager<SceneManager>();
@@ -63,6 +61,15 @@ namespace TaoTie
         static async ETTask StartGameAsync()
         {
             ManagerProvider.RegisterManager<SoundManager>();
+            var sm = ManagerProvider.RegisterManager<SoundManager>();
+
+            GameObjectPoolManager.GetInstance().AddPersistentPrefabPath(UIToast.PrefabPath);
+            using (ListComponent<ETTask> tasks = ListComponent<ETTask>.Create())
+            {
+                tasks.Add(sm.InitAsync());
+                tasks.Add(GameObjectPoolManager.GetInstance().PreLoadGameObjectAsync(UIToast.PrefabPath, 1));
+                await ETTaskHelper.WaitAll(tasks);
+            }
             await PackageManager.Instance.UnloadUnusedAssets(Define.DefaultName);
             SceneManager.Instance.SwitchScene<LoginScene>().Coroutine();
         }

@@ -283,10 +283,9 @@ namespace TaoTie
         public void Init()
         {
             Instance = this;
-            InitAsync().Coroutine();
         }
 
-        private async ETTask InitAsync()
+        public async ETTask InitAsync()
         {
             soundsRoot = new GameObject("SoundsRoot").transform;
             var al = UIManager.Instance.GetUICamera().GetComponent<AudioListener>();
