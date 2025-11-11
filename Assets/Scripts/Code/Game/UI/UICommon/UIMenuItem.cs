@@ -22,6 +22,7 @@ namespace TaoTie
             Btn = AddComponent<UIPointerClick>();
             Btn.SetOnClick(() =>
             {
+                SoundManager.Instance.PlaySound("Audio/Sound/Common_Click.mp3");
                 onClick?.Invoke(Para.Id, Index);
             });
         }

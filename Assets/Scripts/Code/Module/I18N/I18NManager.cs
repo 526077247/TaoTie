@@ -36,7 +36,7 @@ namespace TaoTie
             this.i18nTextKeyDic = new Dictionary<int, string>();
             InitAsync().Coroutine();
 #if !UNITY_WEBGL
-            AddSystemFonts();
+            // AddSystemFonts();
 #endif
         }
 

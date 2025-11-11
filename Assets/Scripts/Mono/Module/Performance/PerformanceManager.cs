@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
-// using UnityEngine.Rendering.Universal;
+using UnityEngine.Rendering.Universal;
 
 namespace TaoTie
 {
@@ -21,18 +21,18 @@ namespace TaoTie
         {
             Instance = this;
             Level = GetDevicePerformanceLevel();
-            // var render = GraphicsSettings.renderPipelineAsset as UniversalRenderPipelineAsset;
-            // if (render!= null)
-            // {
-            //     if (Level == DevicePerformanceLevel.High)
-            //     {
-            //         render.renderScale = 0.85f;
-            //     }
-            //     else
-            //     {
-            //         render.renderScale = 0.75f;
-            //     }
-            // }
+            var render = GraphicsSettings.renderPipelineAsset as UniversalRenderPipelineAsset;
+            if (render!= null)
+            {
+                if (Level == DevicePerformanceLevel.High)
+                {
+                    render.renderScale = 0.85f;
+                }
+                else
+                {
+                    render.renderScale = 0.75f;
+                }
+            }
             SetLowFrame();
         }
 
