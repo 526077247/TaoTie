@@ -23,6 +23,7 @@ namespace TaoTie
                 
                 ManagerProvider.RegisterManager<CoroutineLockManager>();
                 ManagerProvider.RegisterManager<TimerManager>();
+                ManagerProvider.RegisterManager<TweenManager>();
                 
                 ManagerProvider.RegisterManager<CacheManager>();
 
@@ -67,7 +68,6 @@ namespace TaoTie
             ManagerProvider.RegisterManager<PerformanceManager>();
             ManagerProvider.RegisterManager<ImageLoaderManager>();
             ManagerProvider.RegisterManager<MaterialManager>();
-            ManagerProvider.RegisterManager<TweenManager>();
             ManagerProvider.RegisterManager<SceneManager>();
             ManagerProvider.RegisterManager<CameraManager>();
             ManagerProvider.RegisterManager<InputManager>();
